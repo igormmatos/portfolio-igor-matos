@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import UserForm from './components/UserForm';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
@@ -23,7 +23,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <div className="min-h-screen flex flex-col">
         <header className="bg-white border-b border-slate-200 no-print">
           <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -81,7 +81,7 @@ const App: React.FC = () => {
           </div>
         </footer>
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 
