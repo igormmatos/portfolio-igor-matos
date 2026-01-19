@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { storageService } from '../services/storage';
-import { FormSubmission, ProjectStatus, PortfolioProject, SiteContent } from '../types';
+import { FormSubmission, ProjectStatus, PortfolioProject, SiteContent, SiteService } from '../types';
 import { REQUIREMENT_FORM_FIELDS } from '../constants';
 
 type AdminTab = 'submissions' | 'portfolio' | 'content';
@@ -20,6 +20,9 @@ const AdminDashboard: React.FC = () => {
   // State for Content
   const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
 
+  // State for Notifications (Toast)
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
   useEffect(() => {
     refreshData();
   }, []);
@@ -30,6 +33,13 @@ const AdminDashboard: React.FC = () => {
     setSiteContent(storageService.getSiteContent());
   };
 
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
+  };
+
   // --- SUBMISSION HANDLERS ---
   const selectedSubmission = submissions.find(s => s.id === selectedSubId);
   
@@ -38,12 +48,14 @@ const AdminDashboard: React.FC = () => {
       storageService.deleteSubmission(id);
       refreshData();
       if (selectedSubId === id) setSelectedSubId(null);
+      showNotification('Requisito excluído com sucesso.');
     }
   };
 
   const handleStatusChange = (id: string, newStatus: ProjectStatus) => {
     storageService.updateSubmissionStatus(id, newStatus);
     refreshData();
+    showNotification('Status atualizado.');
   };
 
   const getStatusColor = (status: ProjectStatus | undefined) => {
@@ -68,12 +80,14 @@ const AdminDashboard: React.FC = () => {
     storageService.saveProject(projectToSave);
     setEditingProject(null);
     refreshData();
+    showNotification('Projeto salvo com sucesso!', 'success');
   };
 
   const handleDeleteProject = (id: string) => {
     if (window.confirm('Excluir projeto do portfólio?')) {
       storageService.deleteProject(id);
       refreshData();
+      showNotification('Projeto removido.', 'success');
     }
   };
 
@@ -82,12 +96,35 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (siteContent) {
       storageService.saveSiteContent(siteContent);
-      alert('Conteúdo atualizado com sucesso!');
+      showNotification('Conteúdo do site e serviços atualizados com sucesso!', 'success');
+    }
+  };
+
+  const handleAddService = () => {
+    if (!siteContent) return;
+    const newService: SiteService = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: 'Novo Serviço',
+      description: 'Descrição do serviço.',
+      icon: 'fas fa-star'
+    };
+    setSiteContent({
+      ...siteContent,
+      services: [...siteContent.services, newService]
+    });
+  };
+
+  const handleDeleteService = (index: number) => {
+    if (!siteContent) return;
+    if (window.confirm('Remover este serviço?')) {
+      const newServices = [...siteContent.services];
+      newServices.splice(index, 1);
+      setSiteContent({ ...siteContent, services: newServices });
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 relative">
       {/* HEADER & TABS */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800 mb-6">Painel Administrativo</h1>
@@ -341,10 +378,22 @@ const AdminDashboard: React.FC = () => {
               />
             </div>
 
-            <h3 className="font-bold text-xl mt-8 mb-6 pb-2 border-b">Serviços Oferecidos</h3>
+            <h3 className="font-bold text-xl mt-8 mb-6 pb-2 border-b flex justify-between items-center">
+              Serviços Oferecidos
+            </h3>
             <div className="space-y-4">
               {siteContent.services.map((svc, idx) => (
-                <div key={svc.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div key={svc.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
+                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteService(idx)} 
+                        className="text-slate-400 hover:text-red-500 p-1"
+                        title="Remover Serviço"
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                   </div>
                    <div className="flex gap-2 mb-2">
                      <div className="w-1/3">
                         <label className="text-[10px] uppercase font-bold text-slate-400">Título</label>
@@ -360,15 +409,26 @@ const AdminDashboard: React.FC = () => {
                      </div>
                      <div className="w-1/3">
                         <label className="text-[10px] uppercase font-bold text-slate-400">Ícone (FontAwesome)</label>
-                        <input 
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-mono bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                          value={svc.icon}
-                          onChange={e => {
-                            const newServices = [...siteContent.services];
-                            newServices[idx].icon = e.target.value;
-                            setSiteContent({...siteContent, services: newServices});
-                          }}
-                        />
+                        <div className="flex gap-1">
+                          <input 
+                            className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-mono bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            value={svc.icon}
+                            onChange={e => {
+                              const newServices = [...siteContent.services];
+                              newServices[idx].icon = e.target.value;
+                              setSiteContent({...siteContent, services: newServices});
+                            }}
+                          />
+                          <a 
+                            href="https://fontawesome.com/search?m=free" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="px-2 py-1 bg-slate-100 border border-slate-300 rounded hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center justify-center"
+                            title="Buscar ícones no FontAwesome"
+                          >
+                            <i className="fas fa-external-link-alt text-xs"></i>
+                          </a>
+                        </div>
                      </div>
                    </div>
                    <div>
@@ -386,6 +446,14 @@ const AdminDashboard: React.FC = () => {
                    </div>
                 </div>
               ))}
+              
+              <button 
+                type="button" 
+                onClick={handleAddService}
+                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 font-bold hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-plus-circle"></i> Adicionar Novo Serviço
+              </button>
             </div>
 
             <div className="pt-6">
@@ -397,6 +465,30 @@ const AdminDashboard: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* --- NOTIFICATION (TOAST) --- */}
+      {notification && (
+        <div className={`fixed bottom-6 left-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 animate-[slideIn_0.3s_ease-out] ${
+          notification.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-500 text-white'
+        }`}>
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <i className={`fas ${notification.type === 'success' ? 'fa-check' : 'fa-exclamation'} text-lg`}></i>
+          </div>
+          <div>
+            <h4 className="font-bold text-xs uppercase tracking-wider opacity-90 mb-0.5">
+              {notification.type === 'success' ? 'Sucesso' : 'Erro'}
+            </h4>
+            <p className="font-medium text-sm leading-tight">{notification.message}</p>
+          </div>
+          
+          <style>{`
+            @keyframes slideIn {
+              from { transform: translateY(20px); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
         </div>
       )}
     </div>

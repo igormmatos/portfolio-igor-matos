@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/storage';
 import { SiteContent, PortfolioProject } from '../types';
@@ -7,11 +7,25 @@ import { SiteContent, PortfolioProject } from '../types';
 const LandingPage: React.FC = () => {
   const [content, setContent] = useState<SiteContent | null>(null);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setContent(storageService.getSiteContent());
     setProjects(storageService.getProjects());
   }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const { current } = scrollContainerRef;
+      // Scroll by one item width (approximate based on responsive sizing)
+      const scrollAmount = current.clientWidth / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1);
+      
+      current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   if (!content) return null;
 
@@ -25,7 +39,7 @@ const LandingPage: React.FC = () => {
 
         <div className="max-w-6xl mx-auto px-4 w-full relative z-10 grid md:grid-cols-2 gap-12 items-center">
           <div className="order-2 md:order-1 animate-in slide-in-from-left-8 duration-700 fade-in">
-            <span className="inline-block py-1 px-3 rounded-full bg-slate-800 text-indigo-400 text-sm font-semibold mb-6 border border-slate-700">
+            <span className="inline-block py-1 px-3 rounded-full bg-slate-800 text-green-400 text-sm font-semibold mb-6 border border-slate-700">
               Disponível para novos projetos
             </span>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight">
@@ -101,65 +115,107 @@ const LandingPage: React.FC = () => {
 
       {/* PORTFOLIO SECTION */}
       <section id="portfolio" className="py-24 bg-slate-900 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 relative">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Portfólio</h2>
             <div className="w-20 h-1 bg-indigo-600 mx-auto rounded-full"></div>
             <p className="mt-4 text-slate-400">Projetos recentes e estudos de caso</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-              <div key={project.id} className="group bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all">
-                {/* Project Header/Image Placeholder */}
-                <div className="h-48 bg-slate-700 relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60"></div>
-                  <i className="fas fa-code text-6xl text-slate-600 group-hover:text-slate-500 transition-colors"></i>
-                  {project.imageUrl && (
-                    <img src={project.imageUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                </div>
-                
-                <div className="p-8">
-                  <div className="mb-4">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">{project.title}</h3>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.technologies.split(',').map((tech, idx) => (
-                        <span key={idx} className="text-xs font-medium px-2 py-1 bg-slate-900 text-slate-300 rounded border border-slate-700">
-                          {tech.trim()}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-6 h-20 overflow-hidden">
-                      {project.description}
-                    </p>
-                  </div>
+          <div className="relative group">
+            {/* Carousel Controls */}
+            {projects.length > 1 && (
+              <>
+                <button 
+                  onClick={() => scroll('left')}
+                  className="absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-slate-800 text-white rounded-full flex items-center justify-center border border-slate-700 hover:bg-indigo-600 hover:border-indigo-500 transition-all shadow-xl opacity-0 group-hover:opacity-100"
+                  aria-label="Anterior"
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                <button 
+                  onClick={() => scroll('right')}
+                  className="absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-slate-800 text-white rounded-full flex items-center justify-center border border-slate-700 hover:bg-indigo-600 hover:border-indigo-500 transition-all shadow-xl opacity-0 group-hover:opacity-100"
+                  aria-label="Próximo"
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </>
+            )}
 
-                  <div className="flex gap-4 mt-auto">
-                    {project.githubUrl && (
-                      <a 
-                        href={project.githubUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex-1 py-2 text-center rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-                      >
-                        <i className="fab fa-github"></i> Código
-                      </a>
-                    )}
-                    {project.liveUrl && (
-                      <a 
-                        href={project.liveUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex-1 py-2 text-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-                      >
-                        <i className="fas fa-external-link-alt"></i> Online
-                      </a>
-                    )}
-                  </div>
+            {/* Carousel Container */}
+            <div 
+              ref={scrollContainerRef}
+              className="flex gap-8 overflow-x-auto snap-x snap-mandatory pb-8 pt-4 hide-scrollbar"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <style>{`
+                .hide-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              
+              {projects.length === 0 ? (
+                <div className="w-full text-center py-12 bg-slate-800/50 rounded-3xl border border-slate-700 border-dashed">
+                  <p className="text-slate-500">Nenhum projeto adicionado ao portfólio ainda.</p>
                 </div>
-              </div>
-            ))}
+              ) : (
+                projects.map((project) => (
+                  <div 
+                    key={project.id} 
+                    className="min-w-[100%] md:min-w-[calc(50%-16px)] lg:min-w-[calc(33.333%-22px)] snap-center group/card bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all"
+                  >
+                    {/* Project Header/Image Placeholder */}
+                    <div className="h-48 bg-slate-700 relative overflow-hidden flex items-center justify-center">
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60"></div>
+                      <i className="fas fa-code text-6xl text-slate-600 group-hover/card:text-slate-500 transition-colors"></i>
+                      {project.imageUrl && (
+                        <img src={project.imageUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover" />
+                      )}
+                    </div>
+                    
+                    <div className="p-8">
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold mb-2 group-hover/card:text-indigo-400 transition-colors">{project.title}</h3>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {project.technologies.split(',').map((tech, idx) => (
+                            <span key={idx} className="text-xs font-medium px-2 py-1 bg-slate-900 text-slate-300 rounded border border-slate-700">
+                              {tech.trim()}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-slate-400 text-sm leading-relaxed mb-6 h-20 overflow-hidden line-clamp-3">
+                          {project.description}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-4 mt-auto">
+                        {project.githubUrl && (
+                          <a 
+                            href={project.githubUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex-1 py-2 text-center rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                          >
+                            <i className="fab fa-github"></i> Código
+                          </a>
+                        )}
+                        {project.liveUrl && (
+                          <a 
+                            href={project.liveUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex-1 py-2 text-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                          >
+                            <i className="fas fa-external-link-alt"></i> Online
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </section>

@@ -11,7 +11,7 @@ const DEFAULT_CONTENT: SiteContent = {
   profileName: 'Igor Matos',
   profileTitle: 'Full Stack Developer & Tech Consultant',
   profileBio: 'Especialista em transformar ideias complexas em soluções digitais robustas. Com foco em React, Node.js e arquitetura de software, ajudo empresas e empreendedores a tirarem seus projetos do papel com código limpo e escalável.',
-  whatsappNumber: '5511999999999',
+  whatsappNumber: '5595991353797',
   services: [
     { id: '1', title: 'Desenvolvimento Web', description: 'Sites e aplicações web modernas, rápidas e responsivas.', icon: 'fas fa-laptop-code' },
     { id: '2', title: 'Consultoria Técnica', description: 'Análise de viabilidade e arquitetura de sistemas.', icon: 'fas fa-comments' },
