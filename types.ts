@@ -42,6 +42,33 @@ export interface FormSubmission {
   status?: ProjectStatus;
 }
 
+// --- NOVAS INTERFACES PARA A LANDING PAGE ---
+
+export interface PortfolioProject {
+  id: string;
+  title: string;
+  description: string;
+  technologies: string; // Ex: "React, Node.js"
+  githubUrl?: string;
+  liveUrl?: string;
+  imageUrl?: string; // Opcional, usaremos placeholder se não houver
+}
+
+export interface SiteService {
+  id: string;
+  title: string;
+  description: string;
+  icon: string; // FontAwesome class
+}
+
+export interface SiteContent {
+  profileName: string;
+  profileTitle: string;
+  profileBio: string;
+  whatsappNumber: string;
+  services: SiteService[];
+}
+
 export interface AppState {
   submissions: FormSubmission[];
 }
