@@ -1,0 +1,245 @@
+
+import React, { useState } from 'react';
+import { REQUIREMENT_FORM_FIELDS } from '../constants';
+import { FieldType, FormSubmission } from '../types';
+import { storageService } from '../services/storage';
+
+const UserForm: React.FC = () => {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '', isWhatsApp: true });
+
+  // Filter fields based on dependencies
+  const visibleFields = REQUIREMENT_FORM_FIELDS.filter(field => {
+    if (!field.dependsOn) return true;
+    return answers[field.dependsOn.fieldId] === field.dependsOn.value;
+  });
+
+  const totalSteps = visibleFields.length + 1; // +1 for user info step
+
+  const handleInputChange = (fieldId: string, value: any) => {
+    setAnswers(prev => ({ ...prev, [fieldId]: value }));
+  };
+
+  const formatPhone = (value: string) => {
+    if (!value) return value;
+    const phoneNumber = value.replace(/[^\d]/g, '');
+    const phoneNumberLength = phoneNumber.length;
+    
+    if (phoneNumberLength <= 2) {
+      return `(${phoneNumber}`;
+    }
+    if (phoneNumberLength <= 3) {
+      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2)}`;
+    }
+    if (phoneNumberLength <= 7) {
+      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 3)}.${phoneNumber.slice(3)}`;
+    }
+    return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 3)}.${phoneNumber.slice(3, 7)}-${phoneNumber.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatPhone(e.target.value);
+    setUserInfo({ ...userInfo, phone: formattedValue });
+  };
+
+  const nextStep = () => {
+    if (step < totalSteps - 1) setStep(step + 1);
+  };
+
+  const prevStep = () => {
+    if (step > 0) setStep(step - 1);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const submission: FormSubmission = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString(),
+      userName: userInfo.name,
+      userEmail: userInfo.email,
+      userPhone: userInfo.phone,
+      isWhatsApp: userInfo.isWhatsApp,
+      answers,
+    };
+    storageService.saveSubmission(submission);
+    setIsSubmitted(true);
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+          <i className="fas fa-check"></i>
+        </div>
+        <h1 className="text-3xl font-bold text-slate-900 mb-4">Requisitos Enviados!</h1>
+        <p className="text-slate-600 mb-8">
+          Obrigado, {userInfo.name}. Recebemos suas informações. Nosso Product Manager irá analisar os dados e entrará em contato em breve.
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-200"
+        >
+          Enviar Outro Requisito
+        </button>
+      </div>
+    );
+  }
+
+  const currentField = step > 0 ? visibleFields[step - 1] : null;
+
+  return (
+    <div className="max-w-xl mx-auto px-4 py-12">
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Etapa {step + 1} de {totalSteps}</span>
+          <span className="text-xs font-medium text-slate-400">{Math.round(((step + 1) / totalSteps) * 100)}% concluído</span>
+        </div>
+        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+          <div 
+            className="bg-indigo-600 h-full transition-all duration-500 ease-out"
+            style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+        {step === 0 ? (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Vamos começar?</h2>
+              <p className="text-slate-500">Identifique-se para que possamos organizar seus requisitos.</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Seu Nome</label>
+                <input 
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="Nome completo"
+                  value={userInfo.name}
+                  onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">E-mail de Contato</label>
+                <input 
+                  type="email"
+                  required
+                  className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="email@exemplo.com"
+                  value={userInfo.email}
+                  onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Telefone Celular</label>
+                <div className="space-y-2">
+                  <input 
+                    type="tel"
+                    required
+                    className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="(00) 9.0000-0000"
+                    value={userInfo.phone}
+                    onChange={handlePhoneChange}
+                    maxLength={17}
+                  />
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      checked={userInfo.isWhatsApp}
+                      onChange={(e) => setUserInfo({ ...userInfo, isWhatsApp: e.target.checked })}
+                    />
+                    <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                      <i className="fab fa-whatsapp text-green-500"></i> WhatsApp
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500" key={currentField?.id}>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">{currentField?.label}</h2>
+              {currentField?.placeholder && <p className="text-slate-500 text-sm whitespace-pre-wrap">{currentField.placeholder}</p>}
+            </div>
+
+            <div className="space-y-4">
+              {currentField?.type === FieldType.TEXT && (
+                <input 
+                  type="text"
+                  className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  value={answers[currentField.id] || ''}
+                  onChange={(e) => handleInputChange(currentField.id, e.target.value)}
+                  autoFocus
+                />
+              )}
+
+              {currentField?.type === FieldType.TEXTAREA && (
+                <textarea 
+                  className="w-full px-4 py-3 bg-white rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none min-h-[120px]"
+                  value={answers[currentField.id] || ''}
+                  onChange={(e) => handleInputChange(currentField.id, e.target.value)}
+                  autoFocus
+                />
+              )}
+
+              {currentField?.type === FieldType.SELECT && (
+                <div className="grid grid-cols-1 gap-3">
+                  {currentField.options?.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleInputChange(currentField.id, opt.value)}
+                      className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all flex items-center justify-between ${
+                        answers[currentField.id] === opt.value 
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <span className="font-medium">{opt.label}</span>
+                      {answers[currentField.id] === opt.value && <i className="fas fa-check-circle"></i>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
+          <button
+            onClick={prevStep}
+            disabled={step === 0}
+            className={`flex items-center gap-2 font-semibold ${step === 0 ? 'text-slate-300' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            <i className="fas fa-arrow-left"></i> Anterior
+          </button>
+
+          {step === totalSteps - 1 ? (
+            <button
+              onClick={handleSubmit}
+              disabled={!userInfo.name || !userInfo.email || !userInfo.phone}
+              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Finalizar Envio
+            </button>
+          ) : (
+            <button
+              onClick={nextStep}
+              className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg flex items-center gap-2"
+            >
+              Próximo <i className="fas fa-arrow-right text-xs"></i>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserForm;

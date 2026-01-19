@@ -1,0 +1,165 @@
+
+import { FormField, FieldType } from './types';
+
+export const REQUIREMENT_FORM_FIELDS: FormField[] = [
+  {
+    id: 'projectName',
+    label: 'Qual o nome do seu projeto?',
+    type: FieldType.TEXT,
+    placeholder: 'Ex: App de Delivery, CRM de Vendas, Sistema de Clínica...',
+    required: true,
+  },
+  {
+    id: 'projectGoal',
+    label: 'Qual o principal objetivo deste software?',
+    type: FieldType.TEXTAREA,
+    placeholder: 'Exemplo: Um aplicativo para conectar jardineiros a clientes locais que precisam de manutenção em seus jardins de forma prática.',
+    required: true,
+  },
+  {
+    id: 'platformType',
+    label: 'Em qual plataforma o sistema deve rodar?',
+    type: FieldType.SELECT,
+    options: [
+      { label: 'Web (Navegador)', value: 'web' },
+      { label: 'Mobile (Aplicativo Celular)', value: 'mobile' },
+      { label: 'Ambos Web e Mobile', value: 'both' },
+    ],
+    required: true,
+  },
+  {
+    id: 'mobileOS',
+    label: 'Qual sistema operacional mobile é prioridade?',
+    type: FieldType.SELECT,
+    options: [
+      { label: 'iOS (iPhone)', value: 'ios' },
+      { label: 'Android', value: 'android' },
+      { label: 'Ambos', value: 'both' },
+    ],
+    dependsOn: { fieldId: 'platformType', value: 'mobile' },
+  },
+  {
+    id: 'userRoles',
+    label: 'Quais tipos de usuários acessarão o sistema?',
+    type: FieldType.TEXTAREA,
+    placeholder: 'Exemplo: Administrador (gestão total), Cliente (faz pedidos), Entregador (vê rotas). Descreva o que cada um fará de forma geral.',
+    required: true,
+  },
+  {
+    id: 'keyFeatures',
+    label: 'Liste as 3 funcionalidades mais importantes:',
+    type: FieldType.TEXTAREA,
+    placeholder: 'Exemplo:\n1. Login com Google\n2. Cadastro de produtos\n3. Relatório de vendas mensal',
+    required: true,
+  },
+  {
+    id: 'niceToHaveFeatures',
+    label: 'Além das 3 principais, há outras funcionalidades que seriam desejáveis (Nice-to-have) para futuras versões?',
+    type: FieldType.TEXTAREA,
+    placeholder: 'Ex: Integração com redes sociais, Modo offline, Exportação para Excel...',
+    required: false,
+  },
+  {
+    id: 'hasPayment',
+    label: 'O sistema terá algum tipo de pagamento?',
+    type: FieldType.SELECT,
+    options: [
+      { label: 'Sim', value: 'yes' },
+      { label: 'Não', value: 'no' },
+    ],
+    required: true,
+  },
+  {
+    id: 'paymentProvider',
+    label: 'Qual provedor de pagamento você prefere?',
+    type: FieldType.TEXT,
+    placeholder: 'Ex: Stripe, PayPal, Mercado Pago...',
+    dependsOn: { fieldId: 'hasPayment', value: 'yes' },
+  },
+  // --- NOVA SEÇÃO: ESTILO E DESIGN ---
+  {
+    id: 'designSensation',
+    label: 'Qual a principal sensação que você gostaria que o sistema transmitisse?',
+    type: FieldType.SELECT,
+    options: [
+      { label: '💼 Profissionalismo e seriedade', value: 'professional' },
+      { label: '🚀 Modernidade e inovação', value: 'modern' },
+      { label: '🍃 Leveza e simplicidade', value: 'light' },
+      { label: '🛡️ Robustez e segurança', value: 'robust' },
+      { label: '🎨 Criatividade e dinamismo', value: 'creative' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designExample',
+    label: 'O visual do seu sistema é mais parecido com qual destes?',
+    type: FieldType.SELECT,
+    options: [
+      { label: 'Minimalista: Limpo, com muito espaço em branco e foco no essencial', value: 'minimalist' },
+      { label: 'Vibrante: Cores fortes, muitas imagens e sensação de movimento', value: 'vibrant' },
+      { label: 'Sóbrio: Cores discretas, layout muito organizado e focado em textos', value: 'sober' },
+      { label: 'Dark Mode: Fundo escuro, moderno e com elementos gráficos marcantes', value: 'dark' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designGoal',
+    label: 'Do ponto de vista visual, qual o principal objetivo?',
+    type: FieldType.SELECT,
+    options: [
+      { label: '📖 Informar e educar o usuário', value: 'inform' },
+      { label: '💰 Facilitar a venda de produtos/serviços', value: 'sell' },
+      { label: '🤝 Engajar e interagir com uma comunidade', value: 'engage' },
+      { label: '🖼️ Apresentar um portfólio ou trabalho', value: 'portfolio' },
+      { label: '🛠️ Ser uma ferramenta de uso diário eficiente', value: 'utility' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designDensity',
+    label: 'Como você prefere a disposição das informações?',
+    type: FieldType.SELECT,
+    options: [
+      { label: 'Gosto de ver muitas opções e informações na tela de uma vez', value: 'dense' },
+      { label: 'Prefiro um visual mais limpo, com foco total no essencial', value: 'clean' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designColors',
+    label: 'Com quais cores você mais se identifica para este projeto?',
+    type: FieldType.SELECT,
+    options: [
+      { label: '💧 Claras e suaves (ex: azul claro, verde menta)', value: 'soft' },
+      { label: '🔥 Vibrantes e chamativas (ex: laranja, roxo, rosa)', value: 'vibrant_colors' },
+      { label: '💎 Escuras e elegantes (ex: cinza chumbo, azul marinho)', value: 'elegant' },
+      { label: '🌿 Neutras e terrosas (ex: bege, marrom, verde musgo)', value: 'neutral' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designPersonality',
+    label: 'Como você descreveria a "personalidade" do sistema?',
+    type: FieldType.SELECT,
+    options: [
+      { label: '👔 Sério e formal', value: 'formal' },
+      { label: '😊 Amigável e acessível', value: 'friendly' },
+      { label: '💻 Inovador e tecnológico', value: 'tech' },
+      { label: '🌈 Criativo e artístico', value: 'artistic' },
+      { label: '🎯 Direto e funcional', value: 'functional' },
+    ],
+    required: true,
+  },
+  {
+    id: 'designElements',
+    label: 'Você tem preferência por algum tipo de elemento visual?',
+    type: FieldType.SELECT,
+    options: [
+      { label: '📸 Fotos de alta qualidade de pessoas e lugares', value: 'photos' },
+      { label: '🎨 Ilustrações e desenhos personalizados', value: 'illustrations' },
+      { label: '➖ Ícones simples e diretos', value: 'icons' },
+      { label: '🤷‍♂️ Não tenho preferência, o que ficar melhor', value: 'none' },
+    ],
+    required: true,
+  },
+];
