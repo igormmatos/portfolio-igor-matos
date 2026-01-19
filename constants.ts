@@ -13,7 +13,7 @@ export const REQUIREMENT_FORM_FIELDS: FormField[] = [
     id: 'projectGoal',
     label: 'Qual o principal objetivo deste software?',
     type: FieldType.TEXTAREA,
-    placeholder: 'Exemplo: Um aplicativo para conectar jardineiros a clientes locais que precisam de manutenção em seus jardins de forma prática.',
+    placeholder: 'Exemplo: Um aplicativo para conectar jardineiros a clientes locais que precisam de manutenção em seus jardins de forma prática.\nOu algo mais simples, como uma landing page de uma pessoa oferecendo serviços e querendo mais visibilidade.',
     required: true,
   },
   {
