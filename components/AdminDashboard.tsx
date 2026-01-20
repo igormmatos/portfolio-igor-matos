@@ -1,748 +1,702 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '../services/storage';
-import { FormSubmission, ProjectStatus, PortfolioProject, SiteContent, SiteService, SiteCompetency } from '../types';
+import { FormSubmission, ProjectStatus, PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
 import { REQUIREMENT_FORM_FIELDS } from '../constants';
 
-type AdminTab = 'submissions' | 'portfolio' | 'content';
+type AdminTab = 'submissions' | 'portfolio' | 'profile' | 'services' | 'competencies' | 'journey';
 
-// Exemplo estático para visualização (Requisito "eozap")
-const EXAMPLE_SUBMISSION: FormSubmission = {
-  id: 'demo-example',
-  timestamp: new Date().toISOString(),
-  userName: 'Exemplo de Visualização',
-  userEmail: 'exemplo@demo.com',
-  userPhone: '(11) 99999-9999',
-  isWhatsApp: true,
-  status: ProjectStatus.NOT_STARTED,
-  answers: {
-    projectName: 'eozap',
-    projectGoal: 'converter conversas em vendas',
-    platformType: 'both',
-    userRoles: 'clientes - conversa.\nAdministrador - gestão geral',
-    keyFeatures: '1. Login com Google\n2. Cadastro de produtos\n3. Relatório de vendas mensal',
-    niceToHaveFeatures: 'Integração com redes sociais, Modo offline, Exportação para Excel',
-    hasPayment: 'yes',
-    paymentProvider: 'Sim'
-  }
+// --- SUB-COMPONENTS (DEFINIDOS FORA PARA PERFORMANCE) ---
+
+// Botões de Ação (Edição/Exclusão)
+const ActionButtons = ({ item, tableName, deleteFn, setListFn, editFn, handleDeleteItem }: any) => (
+    <div className="absolute top-3 right-3 flex gap-2 z-20 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        {editFn && (
+            <button 
+                type="button"
+                onClick={(e) => { 
+                    e.preventDefault();
+                    e.stopPropagation(); 
+                    editFn(item); 
+                }} 
+                className="w-9 h-9 rounded-full bg-white text-indigo-600 shadow-md border border-slate-200 flex items-center justify-center hover:bg-indigo-50 cursor-pointer transition-transform active:scale-95"
+                title="Editar"
+            >
+                <i className="fas fa-pen text-sm pointer-events-none"></i>
+            </button>
+        )}
+        <button 
+            type="button"
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation(); 
+                // Passamos o tableName para a função de delete
+                handleDeleteItem(e, item.id, tableName, deleteFn, setListFn); 
+            }} 
+            className="w-9 h-9 rounded-full bg-white text-red-500 shadow-md border border-slate-200 flex items-center justify-center hover:bg-red-50 cursor-pointer transition-transform active:scale-95"
+            title={`Excluir de ${tableName}`}
+        >
+            <i className="fas fa-trash text-sm pointer-events-none"></i>
+        </button>
+    </div>
+);
+
+const StatusBadge = ({ status }: { status?: string }) => {
+    let color = 'bg-slate-100 text-slate-600';
+    switch (status) {
+      case ProjectStatus.NOT_STARTED: color = 'bg-slate-100 text-slate-600'; break;
+      case ProjectStatus.STARTED: color = 'bg-blue-100 text-blue-600'; break;
+      case ProjectStatus.NEEDS_ADJUSTMENTS: color = 'bg-yellow-100 text-yellow-700'; break;
+      case ProjectStatus.FINISHED: color = 'bg-emerald-100 text-emerald-600'; break;
+    }
+    return <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${color}`}>{status || 'N/A'}</span>;
 };
+
+// --- MAIN COMPONENT ---
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('submissions');
+  const [tabLoading, setTabLoading] = useState(false); // Loading específico da aba
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   
-  // State for Submissions
+  // Cache para evitar recarregamento desnecessário
+  const loadedTabs = useRef<Set<string>>(new Set());
+
+  // Data States
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
-
-  // State for Portfolio
+  
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
 
-  // State for Content
-  const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
+  const [profile, setProfile] = useState<ProfileInfo | null>(null);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [competencies, setCompetencies] = useState<CompetencyItem[]>([]);
+  const [journey, setJourney] = useState<JourneyItem[]>([]);
 
-  // State for Notifications (Toast)
-  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  // Estado para o Modal de Confirmação de Exclusão
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    tableName: string;
+    deleteFn: ((id: string) => Promise<void>) | null;
+    setListFn: any | null;
+  }>({
+    isOpen: false,
+    id: '',
+    tableName: '',
+    deleteFn: null,
+    setListFn: null
+  });
 
+  // Carrega dados apenas quando a aba muda
   useEffect(() => {
-    refreshData();
-  }, []);
+    loadTabData(activeTab);
+  }, [activeTab]);
 
-  const refreshData = () => {
-    // Carrega submissões reais e adiciona o exemplo ao final
-    const storedSubmissions = storageService.getSubmissions();
-    const allSubmissions = [...storedSubmissions, EXAMPLE_SUBMISSION];
-    
-    setSubmissions(allSubmissions);
-    setProjects(storageService.getProjects());
-    setSiteContent(storageService.getSiteContent());
+  const loadTabData = async (tab: AdminTab, force = false) => {
+    // Se já carregou e não é forçado, não faz nada (Performance)
+    if (!force && loadedTabs.current.has(tab)) return;
+
+    setTabLoading(true);
+    try {
+      switch (tab) {
+        case 'submissions':
+          const subs = await storageService.getSubmissions();
+          setSubmissions(subs);
+          break;
+        case 'portfolio':
+          const projs = await storageService.getProjects();
+          setProjects(projs);
+          break;
+        case 'profile':
+          const prof = await storageService.getProfileInfo();
+          setProfile(prof);
+          break;
+        case 'services':
+          const svcs = await storageService.getServices();
+          setServices(svcs);
+          break;
+        case 'competencies':
+          const comps = await storageService.getCompetencies();
+          setCompetencies(comps);
+          break;
+        case 'journey':
+          const journ = await storageService.getJourney();
+          setJourney(journ);
+          break;
+      }
+      loadedTabs.current.add(tab);
+    } catch (error) {
+      console.error("Erro ao carregar aba:", error);
+      showNotification('Erro ao carregar dados. Verifique sua conexão.', 'error');
+    } finally {
+      setTabLoading(false);
+    }
   };
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
-    setTimeout(() => {
-      setNotification(null);
-    }, 4000);
+    setTimeout(() => setNotification(null), 4000);
   };
 
-  // --- SUBMISSION HANDLERS ---
-  const selectedSubmission = submissions.find(s => s.id === selectedSubId);
+  // --- SUBMISSION ACTIONS ---
   
-  const handleDeleteSubmission = (id: string, e?: React.MouseEvent) => {
+  const handleStatusChange = async (id: string, newStatus: ProjectStatus) => {
+    try {
+      await storageService.updateSubmissionStatus(id, newStatus);
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+      showNotification('Status atualizado!', 'success');
+    } catch (e: any) {
+      showNotification(e.message || 'Erro ao atualizar status', 'error');
+    }
+  };
+
+  const handleCopyPrompt = (submission: FormSubmission) => {
+    let text = `📋 **REQUISITOS DO PROJETO**\n\n`;
+    text += `👤 **Cliente:** ${submission.userName} (${submission.userEmail})\n`;
+    text += `📅 **Data:** ${new Date(submission.timestamp).toLocaleDateString()}\n`;
+    text += `-----------------------------------\n\n`;
+
+    REQUIREMENT_FORM_FIELDS.forEach(field => {
+      const answer = submission.answers[field.id];
+      if (answer) {
+        let displayAnswer = answer;
+        if (field.options) {
+            const opt = field.options.find(o => o.value === answer);
+            if (opt) displayAnswer = opt.label;
+        }
+        text += `🔹 **${field.label}**\n${displayAnswer}\n\n`;
+      }
+    });
+
+    navigator.clipboard.writeText(text);
+    showNotification('Prompt copiado para a área de transferência!', 'success');
+  };
+
+  // --- GENERIC HANDLERS ---
+  const handleInputChange = (setter: any, currentObj: any, field: string, value: any) => {
+     setter({ ...currentObj, [field]: value });
+  };
+
+  const handleSaveItem = async (
+    item: any, 
+    saveFn: (i: any) => Promise<void>, 
+    tabName: AdminTab,
+    setListFn: (l: any) => void
+  ) => {
+    try {
+      await saveFn(item);
+      // Recarrega apenas a aba atual forçadamente
+      await loadTabData(tabName, true);
+      showNotification('Item salvo com sucesso!', 'success');
+      if (activeTab === 'portfolio') setEditingProject(null);
+    } catch (e: any) { 
+        showNotification(e.message || 'Erro ao salvar item', 'error'); 
+    }
+  };
+
+  // Esta função agora APENAS abre o modal.
+  const handleDeleteItem = async (
+    e: React.MouseEvent,
+    id: string, 
+    tableName: string,
+    deleteFn: (id: string) => Promise<void>,
+    setListFn: React.Dispatch<React.SetStateAction<any[]>>
+  ) => {
     if (e) {
         e.preventDefault();
         e.stopPropagation();
     }
     
-    if (id === 'demo-example') {
-        showNotification('Este é um exemplo de visualização e não pode ser excluído.', 'error');
-        return;
-    }
-    if (window.confirm('Excluir requisito?')) {
-      storageService.deleteSubmission(id);
-      refreshData();
-      if (selectedSubId === id) setSelectedSubId(null);
-      showNotification('Requisito excluído com sucesso.');
-    }
-  };
-
-  const handleStatusChange = (id: string, newStatus: ProjectStatus) => {
-    if (id === 'demo-example') {
-        // Apenas atualiza estado local para o exemplo
-        setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
-        showNotification('Status do exemplo atualizado (apenas visual).');
-        return;
-    }
-    storageService.updateSubmissionStatus(id, newStatus);
-    refreshData();
-    showNotification('Status atualizado.');
-  };
-
-  const handleCopyRequirement = () => {
-    if (!selectedSubmission) return;
-
-    const content = REQUIREMENT_FORM_FIELDS.map(field => {
-        const val = selectedSubmission.answers[field.id];
-        if (!val) return null;
-        const label = field.label;
-        let displayVal = val;
-         if (field.options) {
-             const opt = field.options.find(o => o.value === val);
-             if (opt) displayVal = opt.label;
-         }
-        return `*${label}*\n${displayVal}`;
-    }).filter(Boolean).join('\n\n');
-
-    const fullText = `📋 *Requisito: ${selectedSubmission.answers.projectName}*\n` +
-                     `👤 ${selectedSubmission.userName} | 📧 ${selectedSubmission.userEmail} | 📱 ${selectedSubmission.userPhone}\n` +
-                     `-----------------------------------\n\n` +
-                     content;
-
-    navigator.clipboard.writeText(fullText);
-    showNotification('Requisito copiado para a área de transferência!', 'success');
-  };
-
-  const getStatusColor = (status: ProjectStatus | undefined) => {
-    switch (status) {
-      case ProjectStatus.STARTED: return 'bg-blue-100 text-blue-700 border-blue-200';
-      case ProjectStatus.NEEDS_ADJUSTMENTS: return 'bg-amber-100 text-amber-700 border-amber-200';
-      case ProjectStatus.FINISHED: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  };
-
-  // --- PORTFOLIO HANDLERS ---
-  const handleSaveProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProject) return;
-    
-    const projectToSave = {
-      ...editingProject,
-      id: editingProject.id || Math.random().toString(36).substr(2, 9)
-    };
-    
-    storageService.saveProject(projectToSave);
-    setEditingProject(null);
-    refreshData();
-    showNotification('Projeto salvo com sucesso!', 'success');
-  };
-
-  const handleDeleteProject = (id: string, e?: React.MouseEvent) => {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    if (window.confirm('Excluir projeto do portfólio?')) {
-      storageService.deleteProject(id);
-      refreshData();
-      showNotification('Projeto removido.', 'success');
-    }
-  };
-
-  // --- CONTENT HANDLERS ---
-  const handleSaveContent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (siteContent) {
-      storageService.saveSiteContent(siteContent);
-      showNotification('Conteúdo atualizado com sucesso!', 'success');
-    }
-  };
-
-  const handleAddService = () => {
-    if (!siteContent) return;
-    const newService: SiteService = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: 'Novo Serviço',
-      description: 'Descrição do serviço.',
-      icon: 'fas fa-star'
-    };
-    setSiteContent({
-      ...siteContent,
-      services: [...siteContent.services, newService]
+    // Configura o modal para abrir
+    setDeleteModal({
+        isOpen: true,
+        id,
+        tableName,
+        deleteFn,
+        setListFn
     });
   };
 
-  const handleDeleteService = (index: number, e?: React.MouseEvent) => {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    if (!siteContent) return;
-    if (window.confirm('Remover este serviço?')) {
-      const newServices = [...siteContent.services];
-      newServices.splice(index, 1);
+  // Esta função é chamada quando o usuário clica em "Confirmar" no modal
+  const confirmDelete = async () => {
+      const { id, tableName, deleteFn, setListFn } = deleteModal;
       
-      const newContent = { ...siteContent, services: newServices };
-      setSiteContent(newContent);
-      storageService.saveSiteContent(newContent); // Auto-save for better UX
-      showNotification('Serviço removido e salvo.');
+      if (!id || !deleteFn || !setListFn) return;
+
+      try {
+        console.log(`[DELETE] Executando exclusão real. Tabela: '${tableName}', ID: '${id}'`);
+
+        // Atualização Otimista
+        setListFn((prevList: any[]) => prevList.filter((item) => item.id !== id));
+
+        if (id && id.trim() !== '') {
+            await deleteFn(id);
+        }
+        
+        showNotification('Item excluído com sucesso!', 'success');
+        
+        if (activeTab === 'submissions' && selectedSubId === id) {
+            setSelectedSubId(null);
+        }
+      } catch (e: any) { 
+          console.error(`[DELETE] Erro ao excluir de ${tableName}:`, e);
+          showNotification('Erro ao excluir do banco de dados. Recarregue a página.', 'error'); 
+      } finally {
+          // Fecha o modal
+          setDeleteModal({ isOpen: false, id: '', tableName: '', deleteFn: null, setListFn: null });
+      }
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    try {
+      await storageService.saveProfileInfo(profile);
+      showNotification('Perfil atualizado!', 'success');
+    } catch (e: any) { 
+        showNotification(e.message || 'Erro ao salvar perfil', 'error'); 
     }
   };
 
-  const handleAddCompetency = () => {
-    if (!siteContent) return;
-    const newComp: SiteCompetency = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: 'Nova Competência',
-      subtitle: 'Descrição da competência',
-      icon: 'fas fa-star',
-      items: ['Item 1', 'Item 2'],
-      colorTheme: 'blue'
-    };
-    setSiteContent({
-      ...siteContent,
-      competencies: [...siteContent.competencies, newComp]
-    });
-  };
+  // --- STYLES CONSTANTS ---
+  const inputClass = "w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all";
+  const labelClass = "text-xs font-bold text-slate-500 uppercase mb-1 block";
 
-  const handleDeleteCompetency = (index: number, e?: React.MouseEvent) => {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    if (!siteContent) return;
-    if (window.confirm('Remover esta competência?')) {
-      const newComps = [...siteContent.competencies];
-      newComps.splice(index, 1);
-      
-      const newContent = { ...siteContent, competencies: newComps };
-      setSiteContent(newContent);
-      storageService.saveSiteContent(newContent); // Auto-save for better UX
-      showNotification('Competência removida e salva.');
-    }
-  };
+  const selectedSubmission = submissions.find(s => s.id === selectedSubId);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 relative">
-      {/* HEADER & TABS */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-6">Painel Administrativo</h1>
-        <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
-          <button 
-            type="button"
-            onClick={() => setActiveTab('submissions')}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
-              activeTab === 'submissions' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <i className="fas fa-list-alt mr-2"></i> Requisitos ({submissions.length})
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('portfolio')}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
-              activeTab === 'portfolio' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <i className="fas fa-briefcase mr-2"></i> Portfólio ({projects.length})
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('content')}
-            className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
-              activeTab === 'content' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <i className="fas fa-pen-fancy mr-2"></i> Conteúdo do Site
-          </button>
+    <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+      
+      {/* SIDEBAR NAVIGATION */}
+      <aside className={`fixed md:relative top-0 h-full w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform z-30 shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between shrink-0">
+           <span className="text-white font-bold text-xl"><i className="fas fa-layer-group text-indigo-500 mr-2"></i> Admin</span>
+           <button className="md:hidden text-slate-400" onClick={() => setSidebarOpen(false)}><i className="fas fa-times"></i></button>
         </div>
-      </div>
+        
+        <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
+          {[
+            { id: 'submissions', icon: 'fa-file-invoice', label: 'Requisitos' },
+            { id: 'portfolio', icon: 'fa-briefcase', label: 'Portfólio' },
+            { id: 'services', icon: 'fa-chess-knight', label: 'Serviços' },
+            { id: 'competencies', icon: 'fa-star', label: 'Competências' },
+            { id: 'journey', icon: 'fa-road', label: 'Jornada' },
+            { id: 'profile', icon: 'fa-user-circle', label: 'Perfil' },
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id as AdminTab); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' 
+                  : 'hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <i className={`fas ${tab.icon} w-5 text-center`}></i>
+              <span className="font-medium">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+        
+        <div className="p-4 border-t border-slate-800 shrink-0">
+           <button onClick={() => window.location.reload()} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+              <i className="fas fa-sign-out-alt"></i> Sair
+           </button>
+        </div>
+      </aside>
 
-      {/* --- TAB: SUBMISSIONS --- */}
-      {activeTab === 'submissions' && (
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* List */}
-          <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
-                {submissions.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400">Nenhum requisito recebido.</div>
-                ) : (
-                  submissions.map(sub => (
+      {/* MOBILE OVERLAY */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+
+      {/* MAIN CONTENT WRAPPER */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 relative w-full">
+        
+        {/* HEADER */}
+        <header className="p-4 md:p-8 pb-0 shrink-0 flex items-center justify-between">
+           <div className="flex items-center gap-4">
+              <button className="md:hidden p-2 text-slate-600" onClick={() => setSidebarOpen(true)}><i className="fas fa-bars text-xl"></i></button>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 capitalize">
+                {activeTab === 'submissions' ? 'Gestão de Requisitos' : activeTab}
+              </h1>
+           </div>
+           {tabLoading && <div className="text-indigo-600 animate-spin bg-white p-2 rounded-full shadow-sm"><i className="fas fa-circle-notch"></i></div>}
+        </header>
+
+        {/* SCROLLABLE CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+
+            {/* --- TAB: SUBMISSIONS --- */}
+            {activeTab === 'submissions' && (
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] min-h-[500px]">
+                {/* LISTA */}
+                <div className="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-slate-100 bg-slate-50">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{submissions.length} Solicitações</span>
+                </div>
+                <div className="flex-grow overflow-y-auto divide-y divide-slate-100">
+                    {!tabLoading && submissions.length === 0 && <div className="p-8 text-center text-slate-400">Nenhum requisito recebido.</div>}
+                    {submissions.map(sub => (
                     <div 
-                      key={sub.id}
-                      onClick={() => setSelectedSubId(sub.id)}
-                      className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
-                         selectedSubId === sub.id ? 'bg-indigo-50 border-indigo-600' : 'border-transparent'
-                      }`}
+                        key={sub.id} 
+                        onClick={() => setSelectedSubId(sub.id)} 
+                        className={`p-5 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
+                            selectedSubId === sub.id ? 'bg-indigo-50/50 border-indigo-600' : 'border-transparent'
+                        }`}
                     >
-                      <h3 className="font-semibold text-slate-900 truncate">
-                        {sub.answers.projectName || 'Sem Título'} 
-                        {sub.id === 'demo-example' && <span className="ml-2 text-[10px] bg-slate-200 text-slate-600 px-1.5 rounded uppercase">Exemplo</span>}
-                      </h3>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getStatusColor(sub.status)} font-bold`}>
-                          {sub.status || ProjectStatus.NOT_STARTED}
-                        </span>
-                        <span className="text-[10px] text-slate-400">{new Date(sub.timestamp).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Details */}
-          <div className="flex-grow">
-            {selectedSubmission ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                 <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-100">
-                    <div>
-                      <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        {selectedSubmission.answers.projectName}
-                        {selectedSubmission.id === 'demo-example' && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Modo Visualização</span>}
-                      </h2>
-                      <p className="text-slate-500 text-sm mt-1">{selectedSubmission.userName} • {selectedSubmission.userEmail}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <button 
-                        onClick={handleCopyRequirement}
-                        type="button"
-                        className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded border border-indigo-100 mr-2 flex items-center gap-2 text-sm font-semibold"
-                        title="Copiar texto do requisito"
-                       >
-                         <i className="fas fa-copy"></i> Copiar
-                       </button>
-
-                       <select 
-                        value={selectedSubmission.status || ProjectStatus.NOT_STARTED}
-                        onChange={(e) => handleStatusChange(selectedSubmission.id, e.target.value as ProjectStatus)}
-                        className="text-sm border rounded-lg px-3 py-2 bg-white text-slate-900"
-                      >
-                        {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <button 
-                        type="button"
-                        onClick={(e) => handleDeleteSubmission(selectedSubmission.id, e)} 
-                        className="text-red-500 p-2 hover:bg-red-50 rounded"
-                        title="Excluir Requisito"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                 </div>
-                 
-                 <div className="space-y-6">
-                    {REQUIREMENT_FORM_FIELDS.map(field => {
-                      const ans = selectedSubmission.answers[field.id];
-                      if (!ans) return null;
-                      if (field.dependsOn && selectedSubmission.answers[field.dependsOn.fieldId] !== field.dependsOn.value) return null;
-                      return (
-                        <div key={field.id}>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-1">{field.label}</h4>
-                          <p className="text-slate-800 whitespace-pre-wrap">
-                             {typeof ans === 'string' && field.options ? field.options.find(o => o.value === ans)?.label || ans : ans}
-                          </p>
+                        <div className="flex justify-between items-start mb-1">
+                            <h3 className="font-semibold text-slate-900 truncate pr-2">{sub.answers.projectName || 'Sem Nome'}</h3>
+                            <StatusBadge status={sub.status} />
                         </div>
-                      )
-                    })}
-                 </div>
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl p-12 bg-slate-50/50">
-                Selecione um item para ver detalhes
-              </div>
+                        <p className="text-sm text-slate-500 mb-2 truncate">{sub.userName}</p>
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <i className="far fa-clock"></i> {new Date(sub.timestamp).toLocaleDateString()} 
+                            <span>•</span>
+                            {sub.isWhatsApp ? <i className="fab fa-whatsapp text-green-500"></i> : <i className="far fa-envelope"></i>}
+                        </div>
+                    </div>
+                    ))}
+                </div>
+                </div>
+
+                {/* DETALHES */}
+                <div className="flex-grow bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    {selectedSubmission ? (
+                    <>
+                        <div className="p-6 border-b border-slate-100 bg-slate-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">{selectedSubmission.answers.projectName}</h2>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-slate-600">
+                                <span className="flex items-center gap-1"><i className="far fa-user"></i> {selectedSubmission.userName}</span>
+                                <span className="flex items-center gap-1"><i className="far fa-envelope"></i> {selectedSubmission.userEmail}</span>
+                                <span className="flex items-center gap-1"><i className="fas fa-phone"></i> {selectedSubmission.userPhone}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            <div className="relative">
+                                <select 
+                                    value={selectedSubmission.status || ProjectStatus.NOT_STARTED}
+                                    onChange={(e) => handleStatusChange(selectedSubmission.id, e.target.value as ProjectStatus)}
+                                    className="appearance-none pl-3 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer hover:bg-slate-50"
+                                >
+                                    {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                                <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
+                            </div>
+
+                            <button 
+                                type="button"
+                                onClick={() => handleCopyPrompt(selectedSubmission)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center gap-2"
+                            >
+                                <i className="fas fa-robot"></i> Copiar p/ IA
+                            </button>
+
+                            <button 
+                                type="button"
+                                // ADICIONADO 'submissions' tableName explicitamente
+                                onClick={(e) => handleDeleteItem(e, selectedSubmission.id, 'submissions', storageService.deleteSubmission, setSubmissions)}
+                                className="px-3 py-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors border border-red-100"
+                                title="Excluir"
+                            >
+                                <i className="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        </div>
+
+                        <div className="flex-grow overflow-y-auto p-6 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {REQUIREMENT_FORM_FIELDS.map(field => {
+                                const answer = selectedSubmission.answers[field.id];
+                                if (!answer) return null;
+                                
+                                let displayAnswer = answer;
+                                if (field.options) {
+                                    const opt = field.options.find(o => o.value === answer);
+                                    if (opt) displayAnswer = opt.label;
+                                }
+
+                                return (
+                                    <div key={field.id} className={`${field.type === 'TEXTAREA' ? 'md:col-span-2' : ''}`}>
+                                        <label className={labelClass}>{field.label}</label>
+                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-800 text-sm whitespace-pre-wrap leading-relaxed">
+                                            {displayAnswer}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        </div>
+                    </>
+                    ) : (
+                    <div className="flex-grow flex flex-col items-center justify-center text-slate-400 p-8">
+                        <i className="fas fa-inbox text-5xl mb-4 opacity-20"></i>
+                        <p>Selecione um requisito ao lado para ver os detalhes.</p>
+                    </div>
+                    )}
+                </div>
+            </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* --- TAB: PORTFOLIO --- */}
-      {activeTab === 'portfolio' && (
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center mb-4">
-               <h3 className="font-bold text-lg">Projetos Ativos</h3>
-               <button 
-                type="button"
-                onClick={() => setEditingProject({ id: '', title: '', description: '', technologies: '', role: '' })}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700"
-               >
-                 <i className="fas fa-plus mr-2"></i> Novo Projeto
-               </button>
-            </div>
-            
-            <div className="grid gap-4">
-              {projects.map(p => (
-                <div key={p.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-start group">
-                  <div>
-                    <h4 className="font-bold text-lg text-slate-900">{p.title}</h4>
-                    <p className="text-xs text-indigo-600 font-bold mb-1 uppercase">{p.role}</p>
-                    <p className="text-slate-500 text-sm mb-2">{p.description}</p>
-                    <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded">{p.technologies}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setEditingProject(p)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded"><i className="fas fa-edit"></i></button>
-                    <button type="button" onClick={(e) => handleDeleteProject(p.id, e)} className="p-2 text-red-500 hover:bg-red-50 rounded"><i className="fas fa-trash"></i></button>
-                  </div>
+            {/* --- TAB: PORTFOLIO --- */}
+            {activeTab === 'portfolio' && (
+            <div className="grid lg:grid-cols-3 gap-8 pb-10">
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-slate-700">Projetos Cadastrados</h2>
+                        <button type="button" onClick={() => setEditingProject({ id: '', title: '', description: '', technologies: '', role: '' })} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow hover:bg-indigo-700 transition"><i className="fas fa-plus mr-1"></i> Novo Projeto</button>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                        {projects.map(p => (
+                            <div key={p.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative">
+                                <ActionButtons 
+                                    item={p} 
+                                    tableName="projects" // NOME DA TABELA EXPLÍCITO
+                                    deleteFn={storageService.deleteProject} 
+                                    setListFn={setProjects} 
+                                    editFn={setEditingProject} 
+                                    handleDeleteItem={handleDeleteItem} 
+                                />
+                                
+                                <div className="h-32 bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
+                                    {p.imageUrl ? <img src={p.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-slate-300"><i className="fas fa-image text-3xl"></i></div>}
+                                </div>
+                                <h4 className="font-bold text-slate-900 mb-1">{p.title}</h4>
+                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{p.role}</span>
+                                <p className="text-sm text-slate-500 mt-2 line-clamp-2">{p.description}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="lg:col-span-1">
-             {editingProject && (
-               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xl sticky top-24">
-                 <h3 className="font-bold text-lg mb-4">{editingProject.id ? 'Editar Projeto' : 'Novo Projeto'}</h3>
-                 <form onSubmit={handleSaveProject} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Título</label>
-                      <input 
-                        type="text" 
-                        required
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                        value={editingProject.title}
-                        onChange={e => setEditingProject({...editingProject, title: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Meu Papel (Ex: Tech Lead)</label>
-                      <input 
-                        type="text" 
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                        value={editingProject.role || ''}
-                        onChange={e => setEditingProject({...editingProject, role: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">URL Imagem (Opcional)</label>
-                      <input 
-                        type="text" 
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                        value={editingProject.imageUrl || ''}
-                        onChange={e => setEditingProject({...editingProject, imageUrl: e.target.value})}
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Descrição</label>
-                      <textarea 
-                        required
-                        rows={3}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                        value={editingProject.description}
-                        onChange={e => setEditingProject({...editingProject, description: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Tecnologias (separadas por vírgula)</label>
-                      <input 
-                        type="text" 
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                        value={editingProject.technologies}
-                        onChange={e => setEditingProject({...editingProject, technologies: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1">Link GitHub</label>
-                        <input 
-                          type="text" 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                          value={editingProject.githubUrl || ''}
-                          onChange={e => setEditingProject({...editingProject, githubUrl: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1">Link Online</label>
-                        <input 
-                          type="text" 
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                          value={editingProject.liveUrl || ''}
-                          onChange={e => setEditingProject({...editingProject, liveUrl: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button type="button" onClick={() => setEditingProject(null)} className="flex-1 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">Cancelar</button>
-                      <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Salvar</button>
-                    </div>
-                 </form>
-               </div>
-             )}
-          </div>
-        </div>
-      )}
-
-      {/* --- TAB: CONTENT --- */}
-      {activeTab === 'content' && siteContent && (
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-          <form onSubmit={handleSaveContent} className="space-y-6">
-            <h3 className="font-bold text-xl mb-6 pb-2 border-b">Perfil Profissional</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Nome de Exibição</label>
-                <input 
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  value={siteContent.profileName}
-                  onChange={e => setSiteContent({...siteContent, profileName: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">WhatsApp (apenas números)</label>
-                <input 
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  value={siteContent.whatsappNumber}
-                  onChange={e => setSiteContent({...siteContent, whatsappNumber: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Título Profissional</label>
-              <input 
-                className="w-full border border-slate-300 rounded-lg px-4 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                value={siteContent.profileTitle}
-                onChange={e => setSiteContent({...siteContent, profileTitle: e.target.value})}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Biografia Resumida</label>
-              <textarea 
-                rows={4}
-                className="w-full border border-slate-300 rounded-lg px-4 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                value={siteContent.profileBio}
-                onChange={e => setSiteContent({...siteContent, profileBio: e.target.value})}
-              />
-            </div>
-
-            <h3 className="font-bold text-xl mt-8 mb-6 pb-2 border-b flex justify-between items-center">
-              Serviços Oferecidos
-            </h3>
-            <div className="space-y-4">
-              {siteContent.services.map((svc, idx) => (
-                <div key={svc.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
-                   <div className="absolute top-2 right-2">
-                      <button 
-                        type="button" 
-                        onClick={(e) => handleDeleteService(idx, e)} 
-                        className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
-                        title="Remover Serviço"
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                   </div>
-                   <div className="flex gap-2 mb-2">
-                     <div className="w-1/3">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Título</label>
-                        <input 
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                          value={svc.title}
-                          onChange={e => {
-                            const newServices = [...siteContent.services];
-                            newServices[idx].title = e.target.value;
-                            setSiteContent({...siteContent, services: newServices});
-                          }}
-                        />
-                     </div>
-                     <div className="w-1/3">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Ícone (FontAwesome)</label>
-                        <div className="flex gap-1">
-                          <input 
-                            className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-mono bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                            value={svc.icon}
-                            onChange={e => {
-                              const newServices = [...siteContent.services];
-                              newServices[idx].icon = e.target.value;
-                              setSiteContent({...siteContent, services: newServices});
-                            }}
-                          />
-                          <a 
-                            href="https://fontawesome.com/search?m=free" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="px-2 py-1 bg-slate-100 border border-slate-300 rounded hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors flex items-center justify-center"
-                            title="Buscar ícones no FontAwesome"
-                          >
-                            <i className="fas fa-external-link-alt text-xs"></i>
-                          </a>
+                {editingProject && (
+                    <div className="lg:col-span-1">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl sticky top-4">
+                            <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-slate-800">{editingProject.id ? 'Editar Projeto' : 'Novo Projeto'}</h3>
+                            <button type="button" onClick={() => setEditingProject(null)} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                            </div>
+                            <div className="space-y-4">
+                            <input className={inputClass} placeholder="Título do Projeto" value={editingProject.title} onChange={e => handleInputChange(setEditingProject, editingProject, 'title', e.target.value)} />
+                            <textarea className={inputClass} placeholder="Descrição curta" rows={3} value={editingProject.description} onChange={e => handleInputChange(setEditingProject, editingProject, 'description', e.target.value)} />
+                            <input className={inputClass} placeholder="Tecnologias (ex: React, Node)" value={editingProject.technologies} onChange={e => handleInputChange(setEditingProject, editingProject, 'technologies', e.target.value)} />
+                            <input className={inputClass} placeholder="Seu Papel (Ex: Tech Lead)" value={editingProject.role || ''} onChange={e => handleInputChange(setEditingProject, editingProject, 'role', e.target.value)} />
+                            <input className={inputClass} placeholder="URL da Imagem" value={editingProject.imageUrl || ''} onChange={e => handleInputChange(setEditingProject, editingProject, 'imageUrl', e.target.value)} />
+                            <div className="grid grid-cols-2 gap-2">
+                                <input className={inputClass} placeholder="GitHub URL" value={editingProject.githubUrl || ''} onChange={e => handleInputChange(setEditingProject, editingProject, 'githubUrl', e.target.value)} />
+                                <input className={inputClass} placeholder="Demo URL" value={editingProject.liveUrl || ''} onChange={e => handleInputChange(setEditingProject, editingProject, 'liveUrl', e.target.value)} />
+                            </div>
+                            <button type="button" onClick={() => handleSaveItem(editingProject, storageService.saveProject, 'portfolio', setProjects)} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all">Salvar Projeto</button>
+                            </div>
                         </div>
-                     </div>
-                   </div>
-                   <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400">Descrição</label>
-                      <textarea 
-                        rows={2}
-                        className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        value={svc.description}
-                        onChange={e => {
-                          const newServices = [...siteContent.services];
-                          newServices[idx].description = e.target.value;
-                          setSiteContent({...siteContent, services: newServices});
-                        }}
-                      />
-                   </div>
-                </div>
-              ))}
-              
-              <button 
-                type="button" 
-                onClick={handleAddService}
-                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 font-bold hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
-              >
-                <i className="fas fa-plus-circle"></i> Adicionar Novo Serviço
-              </button>
+                    </div>
+                )}
             </div>
+            )}
 
-            <h3 className="font-bold text-xl mt-8 mb-6 pb-2 border-b flex justify-between items-center">
-              Competências
-            </h3>
-            <div className="space-y-4">
-              {siteContent.competencies.map((comp, idx) => (
-                <div key={comp.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
-                   <div className="absolute top-2 right-2">
-                      <button 
-                        type="button" 
-                        onClick={(e) => handleDeleteCompetency(idx, e)} 
-                        className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
-                        title="Remover Competência"
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                   </div>
-                   <div className="flex gap-2 mb-2">
-                     <div className="w-1/3">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Título</label>
-                        <input 
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                          value={comp.title}
-                          onChange={e => {
-                            const newComps = [...siteContent.competencies];
-                            newComps[idx].title = e.target.value;
-                            setSiteContent({...siteContent, competencies: newComps});
-                          }}
-                        />
-                     </div>
-                     <div className="w-1/3">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Ícone</label>
-                        <input 
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-mono bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                          value={comp.icon}
-                          onChange={e => {
-                            const newComps = [...siteContent.competencies];
-                            newComps[idx].icon = e.target.value;
-                            setSiteContent({...siteContent, competencies: newComps});
-                          }}
-                        />
-                     </div>
-                     <div className="w-1/3">
-                        <label className="text-[10px] uppercase font-bold text-slate-400">Cor (Tema)</label>
-                        <select 
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                          value={comp.colorTheme}
-                          onChange={e => {
-                            const newComps = [...siteContent.competencies];
-                            newComps[idx].colorTheme = e.target.value as any;
-                            setSiteContent({...siteContent, competencies: newComps});
-                          }}
+            {/* --- TAB: PROFILE --- */}
+            {activeTab === 'profile' && profile && (
+            <div className="max-w-3xl mx-auto pb-10">
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-4 mb-8 pb-8 border-b border-slate-100">
+                        <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl">
+                            <i className="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Perfil Profissional</h2>
+                            <p className="text-slate-500">Informações exibidas na Hero Section da Landing Page.</p>
+                        </div>
+                    </div>
+                    <form onSubmit={handleSaveProfile} className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div><label className={labelClass}>Nome de Exibição</label><input className={inputClass} value={profile.displayName} onChange={e => handleInputChange(setProfile, profile, 'displayName', e.target.value)} /></div>
+                            <div><label className={labelClass}>Título / Headline</label><input className={inputClass} value={profile.headline} onChange={e => handleInputChange(setProfile, profile, 'headline', e.target.value)} /></div>
+                        </div>
+                        <div><label className={labelClass}>Bio / Resumo</label><textarea className={inputClass} rows={4} value={profile.bio} onChange={e => handleInputChange(setProfile, profile, 'bio', e.target.value)} /></div>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div><label className={labelClass}>WhatsApp (apenas números)</label><input className={inputClass} value={profile.whatsapp} onChange={e => handleInputChange(setProfile, profile, 'whatsapp', e.target.value)} /></div>
+                            <div className="md:col-span-2"><label className={labelClass}>Email Contato</label><input className={inputClass} value={profile.email} onChange={e => handleInputChange(setProfile, profile, 'email', e.target.value)} /></div>
+                        </div>
+                        <button type="submit" className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+            )}
+
+            {/* --- TAB: SERVICES --- */}
+            {activeTab === 'services' && (
+            <div className="max-w-5xl mx-auto space-y-6 pb-10">
+                <button type="button" onClick={() => setServices([...services, { id: '', title: 'Novo Serviço', description: '', icon: 'fas fa-star', displayOrder: services.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Serviço</button>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                    {services.map((svc, idx) => (
+                        <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group">
+                            <ActionButtons 
+                                item={svc} 
+                                tableName="services" // NOME DA TABELA EXPLÍCITO
+                                deleteFn={storageService.deleteService} 
+                                setListFn={setServices} 
+                                handleDeleteItem={handleDeleteItem}
+                            />
+                            <div className="flex gap-4 mb-4">
+                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-xl text-indigo-600 shrink-0">
+                                <i className={svc.icon}></i>
+                                </div>
+                                <div className="flex-grow space-y-2">
+                                <input className={inputClass} placeholder="Título" value={svc.title} onChange={e => { const n = [...services]; n[idx].title = e.target.value; setServices(n); }} />
+                                <div className="flex gap-2">
+                                    <input className={inputClass} placeholder="Icon Class" value={svc.icon} onChange={e => { const n = [...services]; n[idx].icon = e.target.value; setServices(n); }} />
+                                    <input type="number" className={`${inputClass} w-20`} placeholder="#" value={svc.displayOrder} onChange={e => { const n = [...services]; n[idx].displayOrder = parseInt(e.target.value); setServices(n); }} />
+                                </div>
+                                </div>
+                            </div>
+                            <textarea className={inputClass} rows={3} placeholder="Descrição" value={svc.description} onChange={e => { const n = [...services]; n[idx].description = e.target.value; setServices(n); }} />
+                            <button type="button" onClick={() => handleSaveItem(svc, storageService.saveService, 'services', setServices)} className="mt-2 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100">Salvar Alterações</button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            )}
+
+            {/* --- TAB: COMPETENCIES --- */}
+            {activeTab === 'competencies' && (
+                <div className="max-w-5xl mx-auto space-y-6 pb-10">
+                    <button type="button" onClick={() => setCompetencies([...competencies, { id: '', title: 'Nova Competência', icon: 'fas fa-star', items: [], colorTheme: 'blue', displayOrder: competencies.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Competência</button>
+                    
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {competencies.map((comp, idx) => (
+                            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group">
+                                <ActionButtons 
+                                    item={comp} 
+                                    tableName="competencies" // NOME DA TABELA EXPLÍCITO
+                                    deleteFn={storageService.deleteCompetency} 
+                                    setListFn={setCompetencies} 
+                                    handleDeleteItem={handleDeleteItem}
+                                />
+
+                                <div className="space-y-3 pt-4">
+                                    <div>
+                                        <label className={labelClass}>Título</label>
+                                        <input className={inputClass} placeholder="Título" value={comp.title} onChange={e => { const n = [...competencies]; n[idx].title = e.target.value; setCompetencies(n); }} />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Subtítulo</label>
+                                        <input className={inputClass} placeholder="Subtítulo opcional" value={comp.subtitle || ''} onChange={e => { const n = [...competencies]; n[idx].subtitle = e.target.value; setCompetencies(n); }} />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className={labelClass}>Cor</label>
+                                            <select className={inputClass} value={comp.colorTheme} onChange={e => { const n = [...competencies]; n[idx].colorTheme = e.target.value as any; setCompetencies(n); }}>
+                                                <option value="blue">Azul</option><option value="indigo">Indigo</option><option value="cyan">Cyan</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Ícone</label>
+                                            <input className={inputClass} placeholder="Icon" value={comp.icon} onChange={e => { const n = [...competencies]; n[idx].icon = e.target.value; setCompetencies(n); }} />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Itens (separar por vírgula)</label>
+                                        <textarea className={inputClass} rows={3} value={comp.items.join(', ')} onChange={e => { const n = [...competencies]; n[idx].items = e.target.value.split(',').map(s=>s.trim()); setCompetencies(n); }} />
+                                    </div>
+                                    <button type="button" onClick={() => handleSaveItem(comp, storageService.saveCompetency, 'competencies', setCompetencies)} className="mt-2 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100">Salvar Alterações</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* --- TAB: JOURNEY --- */}
+            {activeTab === 'journey' && (
+                <div className="max-w-5xl mx-auto space-y-6 pb-10">
+                    <button type="button" onClick={() => setJourney([...journey, { id: '', title: 'Novo Cargo', description: '', type: 'work', displayOrder: journey.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Item na Jornada</button>
+                    
+                    <div className="space-y-4">
+                        {journey.map((item, idx) => (
+                            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 group relative">
+                                <div className="absolute top-3 right-3 z-20">
+                                   <ActionButtons 
+                                    item={item} 
+                                    tableName="journey_items" // NOME DA TABELA EXPLÍCITO
+                                    deleteFn={storageService.deleteJourneyItem} 
+                                    setListFn={setJourney} 
+                                    handleDeleteItem={handleDeleteItem}
+                                   />
+                                </div>
+                                <div className="flex flex-col gap-2 items-center justify-center w-12 pt-2">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${item.type === 'work' ? 'bg-indigo-500' : 'bg-emerald-500'}`}>
+                                        <i className={`fas ${item.type === 'work' ? 'fa-briefcase' : 'fa-graduation-cap'}`}></i>
+                                    </div>
+                                    <div className="h-full w-0.5 bg-slate-100"></div>
+                                </div>
+                                
+                                <div className="flex-grow space-y-3">
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                    <div><label className={labelClass}>Cargo / Título</label><input className={inputClass} value={item.title} onChange={e => { const n = [...journey]; n[idx].title = e.target.value; setJourney(n); }} /></div>
+                                    <div><label className={labelClass}>Empresa</label><input className={inputClass} value={item.company || ''} onChange={e => { const n = [...journey]; n[idx].company = e.target.value; setJourney(n); }} /></div>
+                                    </div>
+                                    <div className="flex gap-4 items-center">
+                                        <div className="w-1/3"><label className={labelClass}>Tipo</label>
+                                        <select className={inputClass} value={item.type} onChange={e => { const n = [...journey]; n[idx].type = e.target.value as any; setJourney(n); }}>
+                                            <option value="work">Trabalho</option><option value="education">Educação</option>
+                                        </select>
+                                        </div>
+                                        <div className="w-2/3"><label className={labelClass}>Período</label><input className={inputClass} placeholder="Ex: 2020 - 2023" value={item.period || ''} onChange={e => { const n = [...journey]; n[idx].period = e.target.value; setJourney(n); }} /></div>
+                                    </div>
+                                    <div><label className={labelClass}>Descrição</label><textarea className={inputClass} rows={2} value={item.description} onChange={e => { const n = [...journey]; n[idx].description = e.target.value; setJourney(n); }} /></div>
+                                    <button type="button" onClick={() => handleSaveItem(item, storageService.saveJourneyItem, 'journey', setJourney)} className="mt-2 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100">Salvar Alterações</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* Modal de Confirmação Customizado */}
+        {deleteModal.isOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full animate-in zoom-in-95 duration-200">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-xl mb-4 mx-auto">
+                        <i className="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 text-center mb-2">Excluir Item?</h3>
+                    <p className="text-slate-500 text-center mb-6 text-sm">
+                        Você tem certeza que deseja excluir este item de <strong>{deleteModal.tableName}</strong>? Esta ação não pode ser desfeita.
+                    </p>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+                            className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
                         >
-                          <option value="blue">Blue (Azul)</option>
-                          <option value="indigo">Indigo (Roxo)</option>
-                          <option value="cyan">Cyan (Ciano)</option>
-                        </select>
-                     </div>
-                   </div>
-                   <div className="mb-2">
-                      <label className="text-[10px] uppercase font-bold text-slate-400">Descrição Curta (Subtítulo)</label>
-                      <input 
-                        className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        value={comp.subtitle || ''}
-                        onChange={e => {
-                          const newComps = [...siteContent.competencies];
-                          newComps[idx].subtitle = e.target.value;
-                          setSiteContent({...siteContent, competencies: newComps});
-                        }}
-                      />
-                   </div>
-                   <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-400">Itens (separados por vírgula ou nova linha)</label>
-                      <textarea 
-                        rows={3}
-                        className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        value={comp.items.join('\n')}
-                        onChange={e => {
-                          const newComps = [...siteContent.competencies];
-                          newComps[idx].items = e.target.value.split(/\n|,/).map(s => s.trim()).filter(Boolean);
-                          setSiteContent({...siteContent, competencies: newComps});
-                        }}
-                      />
-                   </div>
+                            Cancelar
+                        </button>
+                        <button 
+                            onClick={confirmDelete}
+                            className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
+                        >
+                            Excluir
+                        </button>
+                    </div>
                 </div>
-              ))}
-              
-              <button 
-                type="button" 
-                onClick={handleAddCompetency}
-                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 font-bold hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
-              >
-                <i className="fas fa-plus-circle"></i> Adicionar Nova Competência
-              </button>
             </div>
+        )}
 
-            <div className="pt-6">
-              <button 
-                type="submit" 
-                className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg"
-              >
-                Salvar Alterações do Site
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* --- NOTIFICATION (TOAST) --- */}
-      {notification && (
-        <div className={`fixed bottom-6 left-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 animate-[slideIn_0.3s_ease-out] ${
-          notification.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-500 text-white'
-        }`}>
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <i className={`fas ${notification.type === 'success' ? 'fa-check' : 'fa-exclamation'} text-lg`}></i>
+        {/* Toast Notification */}
+        {notification && (
+          <div className={`fixed bottom-6 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 text-white animate-in slide-in-from-bottom-5 ${notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-500'}`}>
+             <i className={`fas ${notification.type === 'success' ? 'fa-check' : 'fa-exclamation'}`}></i>
+             <p className="font-bold">{notification.message}</p>
           </div>
-          <div>
-            <h4 className="font-bold text-xs uppercase tracking-wider opacity-90 mb-0.5">
-              {notification.type === 'success' ? 'Sucesso' : 'Erro'}
-            </h4>
-            <p className="font-medium text-sm leading-tight">{notification.message}</p>
-          </div>
-          
-          <style>{`
-            @keyframes slideIn {
-              from { transform: translateY(20px); opacity: 0; }
-              to { transform: translateY(0); opacity: 1; }
-            }
-          `}</style>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 };

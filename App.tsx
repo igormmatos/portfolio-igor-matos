@@ -6,6 +6,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import LandingPage from './components/LandingPage';
 import { storageService } from './services/storage';
+import { supabase } from './services/supabase';
 
 // Componente Wrapper para Header/Footer condicional
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -16,18 +17,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
-    const checkAuth = () => {
-      setIsAdmin(storageService.isAdminLoggedIn());
-    };
-    checkAuth();
-    // Adiciona listener para mudanças no storage (login/logout em outras abas ou componentes)
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
+    // 1. Check initial session
+    storageService.getSession().then(session => {
+        setIsAdmin(!!session);
+    });
+
+    // 2. Listen for auth changes (real-time)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAdmin(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, [location]);
 
-  const handleLogout = () => {
-    storageService.logoutAdmin();
-    setIsAdmin(false);
+  const handleLogout = async () => {
+    await storageService.signOut();
     window.location.reload();
   };
 
@@ -46,18 +50,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           ? 'bg-slate-900/95 backdrop-blur border-slate-800 fixed w-full top-0 z-50' 
           : 'bg-white border-slate-200 sticky top-0 z-40'
       }`}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg transition-colors ${
-              isLandingPage ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white'
-            }`}>
-              <i className="fas fa-code"></i>
-            </div>
-            <span className={`text-xl font-bold ${
-              isLandingPage ? 'text-white' : 'text-slate-900'
-            }`}>
-              Igor<span className="text-indigo-500">Matos</span>
-            </span>
+            <img 
+              src="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX3NlbV9mdW5kby5wbmciLCJpYXQiOjE3Njg5NDU3NjgsImV4cCI6MTgwMDQ4MTc2OH0.2h7K3D9NFx1wO1VospI5Ix3X8T9uv_3J4WmNAW11ncU" 
+              alt="Logo Igor Matos" 
+              className="h-14 md:h-16 w-auto object-contain"
+            />
           </Link>
 
           <div className="flex items-center gap-4">
@@ -162,14 +161,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsAdmin(storageService.isAdminLoggedIn());
+    // Initial check
+    storageService.getSession().then(session => {
+        setIsAdmin(!!session);
+        setIsLoading(false);
+    });
+
+    // Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAdmin(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = (success: boolean) => {
-    if (success) setIsAdmin(true);
-  };
+  if (isLoading) {
+      return <div className="h-screen w-full flex items-center justify-center bg-slate-50 text-indigo-600"><i className="fas fa-spinner fa-spin text-2xl"></i></div>;
+  }
 
   return (
     <HashRouter>
@@ -179,7 +190,7 @@ const App: React.FC = () => {
           <Route path="/requirements" element={<UserForm />} />
           <Route 
             path="/login" 
-            element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={handleLogin} />} 
+            element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={() => {}} />} 
           />
           <Route 
             path="/admin" 
