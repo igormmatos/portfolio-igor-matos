@@ -47,6 +47,7 @@ export interface FormSubmission {
 export interface PortfolioProject {
   id: string;
   title: string;
+  role?: string; // Novo campo: Papel no projeto
   description: string;
   technologies: string; // Ex: "React, Node.js"
   githubUrl?: string;
@@ -64,6 +65,7 @@ export interface SiteService {
 export interface SiteCompetency {
   id: string;
   title: string;
+  subtitle?: string; // Novo campo: Descrição curta
   icon: string;
   items: string[];
   colorTheme: 'blue' | 'indigo' | 'cyan';

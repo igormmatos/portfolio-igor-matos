@@ -16,31 +16,31 @@ const DEFAULT_CONTENT: SiteContent = {
     { 
       id: '1', 
       title: 'Consultoria em TI', 
-      description: 'Análise de necessidades, recomendação de tecnologias e otimização de processos para escalar seu negócio.', 
+      description: 'Transforme seus desafios tecnológicos em oportunidades. Ofereço análise estratégica e recomendações personalizadas para otimizar processos e impulsionar o crescimento do seu negócio.', 
       icon: 'fas fa-chess-knight' 
     },
     { 
       id: '2', 
       title: 'Desenvolvimento de Sistemas', 
-      description: 'Criação de soluções personalizadas do conceito à implementação, para web e mobile.', 
+      description: 'Desenvolvo sistemas web e mobile sob medida, do planejamento à entrega, para que sua ideia se torne uma solução robusta, escalável e eficiente.', 
       icon: 'fas fa-code' 
     },
     { 
       id: '3', 
       title: 'Arquitetura de Soluções', 
-      description: 'Design de sistemas robustos, escaláveis e seguros (Backend, DB Design e Infraestrutura).', 
+      description: 'Garanta estabilidade e segurança. Design de infraestrutura, bancos de dados e APIs preparados para crescer junto com sua demanda.', 
       icon: 'fas fa-server' 
     },
     { 
       id: '4', 
       title: 'Landing Pages', 
-      description: 'Páginas de alta conversão para produtos, serviços ou eventos, com design moderno.', 
+      description: 'Crio Landing Pages de alta performance, com design moderno e focado em conversão, para que você atraia mais leads e vendas para seus produtos ou serviços.', 
       icon: 'fas fa-laptop-code' 
     },
     { 
       id: '5', 
       title: 'Assessoria em Gestão', 
-      description: 'Suporte na condução de projetos de TI, garantindo prazos, qualidade e alinhamento estratégico.', 
+      description: 'Evite atrasos e custos extras. Suporte especializado na condução de projetos de TI, garantindo alinhamento estratégico, qualidade e cumprimento de prazos.', 
       icon: 'fas fa-tasks' 
     }
   ],
@@ -48,6 +48,7 @@ const DEFAULT_CONTENT: SiteContent = {
     {
       id: '1',
       title: 'Desenvolvimento & Arquitetura',
+      subtitle: 'Construindo a base tecnológica para soluções inovadoras.',
       icon: 'fas fa-layer-group',
       items: ['Análise de Sistemas', 'Arquitetura Backend & DB', 'React, Node.js, TypeScript', 'Infraestrutura & Deploy'],
       colorTheme: 'blue'
@@ -55,6 +56,7 @@ const DEFAULT_CONTENT: SiteContent = {
     {
       id: '2',
       title: 'Gestão & Liderança',
+      subtitle: 'Conduzindo equipes e projetos para o sucesso com estratégia e eficiência.',
       icon: 'fas fa-users-cog',
       items: ['Gestão de Projetos Ágeis', 'Liderança de Equipes', 'Planejamento Estratégico', 'Gestão de Requisitos'],
       colorTheme: 'indigo'
@@ -62,6 +64,7 @@ const DEFAULT_CONTENT: SiteContent = {
     {
       id: '3',
       title: 'Consultoria & Estratégia',
+      subtitle: 'Transformando ideias em planos de ação e resultados tangíveis.',
       icon: 'fas fa-chart-line',
       items: ['Consultoria Técnica', 'Definição de Soluções', 'Análise de Negócios', 'Otimização de Processos'],
       colorTheme: 'cyan'
@@ -73,34 +76,42 @@ const DEFAULT_PROJECTS: PortfolioProject[] = [
   {
     id: '1',
     title: 'Marçal Treinos',
+    role: 'Fullstack Developer',
     description: 'Sistema completo de gestão de fichas de alunos (Web/Mobile). Features: Login Google, Acesso individual, Progressão de treino e Integração MercadoPago.',
     technologies: 'React, Node.js, Firebase, MercadoPago API',
     githubUrl: 'https://github.com/igormatos',
-    liveUrl: '#'
+    liveUrl: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop'
   },
   {
     id: '2',
     title: 'Gestão Embrapa Gado de Leite',
+    role: 'Frontend Lead',
     description: 'Sistema de gestão de tarefas otimizado para o setor lácteo, desenvolvido em parceria com o Colégio Cotemig.',
     technologies: 'Vue.js, .NET Core, SQL Server',
     githubUrl: 'https://github.com/igormatos',
-    liveUrl: '#'
+    liveUrl: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=1474&auto=format&fit=crop'
   },
   {
     id: '3',
     title: 'RequirementFlow',
+    role: 'Creator & Developer',
     description: 'Ferramenta SaaS para estruturação inteligente de requisitos de software, facilitando a ponte entre clientes e devs.',
     technologies: 'React, TypeScript, TailwindCSS',
     githubUrl: 'https://github.com/igormatos/reqflow',
-    liveUrl: '#'
+    liveUrl: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1555421689-492a18d9c3ad?q=80&w=1470&auto=format&fit=crop'
   },
   {
     id: '4',
     title: 'Arquitetura 2C Sistemas',
+    role: 'Solutions Architect',
     description: 'Atuação como PM e Arquiteto na reestruturação de sistemas legados e implementação de novos processos de CI/CD.',
     technologies: 'Docker, AWS, Microservices',
     githubUrl: '',
-    liveUrl: '#'
+    liveUrl: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1472&auto=format&fit=crop'
   }
 ];
 
@@ -108,7 +119,12 @@ export const storageService = {
   // --- SUBMISSIONS (RequirementFlow) ---
   getSubmissions: (): FormSubmission[] => {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    try {
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('Error parsing submissions:', e);
+      return [];
+    }
   },
 
   saveSubmission: (submission: FormSubmission) => {
@@ -136,7 +152,19 @@ export const storageService = {
   // --- PORTFOLIO ---
   getProjects: (): PortfolioProject[] => {
     const data = localStorage.getItem(PORTFOLIO_KEY);
-    return data ? JSON.parse(data) : DEFAULT_PROJECTS;
+    if (!data) return DEFAULT_PROJECTS;
+    
+    try {
+      // Ensure all projects have the role field if it's missing from old data
+      const parsed = JSON.parse(data);
+      return parsed.map((p: any) => ({
+        ...p,
+        role: p.role || 'Developer' // Default role if missing
+      }));
+    } catch (e) {
+      console.error('Error parsing projects:', e);
+      return DEFAULT_PROJECTS;
+    }
   },
 
   saveProject: (project: PortfolioProject) => {
@@ -161,13 +189,23 @@ export const storageService = {
   getSiteContent: (): SiteContent => {
     const data = localStorage.getItem(CONTENT_KEY);
     if (data) {
-      const parsed = JSON.parse(data);
-      // Merge with default to ensure new fields (like competencies) exist for old data
-      return { 
-        ...DEFAULT_CONTENT, 
-        ...parsed, 
-        competencies: parsed.competencies || DEFAULT_CONTENT.competencies 
-      };
+      try {
+        const parsed = JSON.parse(data);
+        // Merge with default to ensure new fields (like competencies subtitles) exist for old data
+        const mergedContent = { 
+          ...DEFAULT_CONTENT, 
+          ...parsed,
+          competencies: parsed.competencies ? parsed.competencies.map((c: any, i: number) => ({
+               ...DEFAULT_CONTENT.competencies[i], // fallback to default structure
+               ...c,
+               items: c.items || DEFAULT_CONTENT.competencies[i]?.items || [] // ensure items is an array
+          })) : DEFAULT_CONTENT.competencies
+        };
+        return mergedContent;
+      } catch (e) {
+         console.error('Error parsing site content:', e);
+         return DEFAULT_CONTENT;
+      }
     }
     return DEFAULT_CONTENT;
   },

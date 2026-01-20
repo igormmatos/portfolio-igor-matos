@@ -64,8 +64,9 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <a 
                 href="#journey" 
-                className="px-8 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700 text-center"
+                className="px-8 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700 text-center flex items-center justify-center gap-2"
               >
+                <i className="fab fa-linkedin text-lg"></i>
                 Ver Perfil Profissional
               </a>
               <a 
@@ -214,7 +215,8 @@ const LandingPage: React.FC = () => {
                   <div className={`w-12 h-12 ${colors.iconBg} ${colors.iconText} rounded-xl flex items-center justify-center text-xl mb-6`}>
                     <i className={comp.icon}></i>
                   </div>
-                  <h3 className="text-xl font-bold mb-4">{comp.title}</h3>
+                  <h3 className="text-xl font-bold mb-2">{comp.title}</h3>
+                  {comp.subtitle && <p className="text-sm text-slate-400 mb-6 italic border-l-2 border-slate-600 pl-3">{comp.subtitle}</p>}
                   <ul className="space-y-3 text-slate-400">
                     {comp.items.map((item, idx) => (
                       <li key={idx} className="flex items-center gap-2">
@@ -261,9 +263,21 @@ const LandingPage: React.FC = () => {
                 className="min-w-[85%] md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center flex flex-col bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-indigo-500/50 transition-all duration-300 group hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/20"
               >
                 <div className="h-48 bg-slate-700 relative overflow-hidden flex items-center justify-center">
-                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
-                   <i className="fas fa-code-branch text-5xl text-slate-600 group-hover:text-indigo-500 transition-colors transform group-hover:scale-110 duration-500"></i>
-                   {project.imageUrl && <img src={project.imageUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" />}
+                   {project.imageUrl ? (
+                      <img src={project.imageUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                   ) : (
+                     <>
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
+                        <i className="fas fa-code-branch text-5xl text-slate-600 group-hover:text-indigo-500 transition-colors transform group-hover:scale-110 duration-500"></i>
+                     </>
+                   )}
+                   {project.role && (
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-slate-900/90 text-indigo-400 text-xs font-bold px-3 py-1.5 rounded-full border border-slate-700/50 backdrop-blur-sm shadow-lg">
+                           <i className="fas fa-user-tag mr-1.5"></i> {project.role}
+                        </span>
+                      </div>
+                   )}
                 </div>
                 
                 <div className="p-6 flex-1 flex flex-col">
@@ -310,102 +324,130 @@ const LandingPage: React.FC = () => {
             {content.services.map((service) => (
               <div 
                 key={service.id} 
-                className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-indigo-500 transition-all hover:-translate-y-1 group"
+                className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-indigo-500 transition-all hover:-translate-y-1 group flex flex-col"
               >
-                <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-indigo-400 text-xl mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-indigo-400 text-xl mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
                   <i className={service.icon}></i>
                 </div>
                 <h3 className="text-lg font-bold mb-3">{service.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <p className="text-slate-400 text-sm leading-relaxed flex-grow">
                   {service.description}
                 </p>
               </div>
             ))}
           </div>
+          
+          <div className="mt-16 text-center">
+             <a 
+               href={`https://wa.me/${content.whatsappNumber}`} 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30"
+             >
+                <i className="fab fa-whatsapp text-lg"></i>
+                Solicitar Orçamento
+             </a>
+          </div>
         </div>
       </section>
 
-      {/* 6. CONTACT / CTA */}
+      {/* 6. CONTACT / CTA - REDESIGNED */}
       <section id="contact" className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-indigo-900/10"></div>
-        <div className="max-w-6xl mx-auto px-4 relative z-10 grid md:grid-cols-2 gap-16 items-start">
+        <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col gap-16">
           
-          {/* Contact Info & Requirement Flow Integration */}
-          <div>
-            <h2 className="text-3xl font-bold mb-8">Vamos Conversar?</h2>
-            
-            {/* INTEGRATED REQUIREMENT FLOW CARD - MATCHING SCREENSHOT */}
-            <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden group">
-              {/* Glow effect */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-              
-              <div className="relative z-10">
-                <div className="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-indigo-500/30">
-                  <i className="fas fa-pen-nib"></i>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Tem uma ideia de projeto?</h3>
-                <p className="text-slate-300 text-base mb-8 leading-relaxed">
-                  Utilize minha ferramenta inteligente para estruturar seus requisitos. É o primeiro passo para transformar sua visão em realidade.
-                </p>
-                <Link 
-                  to="/requirements"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-4 bg-white text-slate-900 font-bold text-sm rounded-xl hover:bg-slate-50 transition-all shadow-lg hover:shadow-white/10"
-                >
-                   <i className="fas fa-lightbulb text-indigo-600 text-lg"></i> Estruturar Minha Ideia
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-12">
-              <p className="text-slate-400 mb-6 font-bold text-xs uppercase tracking-widest">
-                Ou entre em contato direto:
-              </p>
-              
-              <div className="space-y-5">
-                 <div className="flex items-center gap-4 group">
-                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-slate-700">
-                     <i className="fas fa-envelope"></i>
-                   </div>
-                   <span className="text-slate-300 font-medium group-hover:text-white transition-colors">igormatos.dev@gmail.com</span>
+          {/* 1. CENTRALIZED IDEA CARD (HIGHLIGHT) */}
+          <div className="w-full bg-gradient-to-r from-indigo-900 to-slate-900 p-1 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-8 duration-700">
+             <div className="bg-slate-900 rounded-[1.3rem] p-8 md:p-12 text-center relative overflow-hidden">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px]"></div>
+                 
+                 <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-indigo-500/30">
+                      <i className="fas fa-lightbulb"></i>
+                    </div>
+                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Tem uma ideia de projeto?</h3>
+                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+                      Utilize minha ferramenta inteligente <b>RequirementFlow</b> para estruturar seus requisitos em minutos. É o primeiro passo para transformar sua visão em realidade.
+                    </p>
+                    <Link 
+                      to="/requirements"
+                      className="px-8 py-4 bg-white text-indigo-900 font-bold text-lg rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all shadow-xl hover:shadow-white/20 flex items-center gap-3"
+                    >
+                       <i className="fas fa-pen-nib"></i>
+                       Estruturar Minha Ideia Agora
+                    </Link>
                  </div>
-                 <a href="https://linkedin.com/in/igormatos" target="_blank" rel="noreferrer" className="flex items-center gap-4 group w-fit">
-                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-slate-700">
-                     <i className="fab fa-linkedin-in"></i>
-                   </div>
-                   <span className="text-slate-300 font-medium group-hover:text-white transition-colors">linkedin.com/in/igormatos</span>
-                 </a>
-                 <a href={`https://wa.me/${content.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 group w-fit">
-                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-slate-700">
-                     <i className="fab fa-whatsapp"></i>
-                   </div>
-                   <span className="text-slate-300 font-medium group-hover:text-white transition-colors">WhatsApp Direct</span>
-                 </a>
-              </div>
-            </div>
+             </div>
           </div>
 
-          {/* Clean Light Form - MATCHING SCREENSHOT */}
-          <div className="bg-white rounded-3xl p-8 lg:p-10 text-slate-900 shadow-2xl relative h-fit">
-            <h3 className="text-2xl font-bold mb-8 text-slate-800">Envie uma mensagem</h3>
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label>
-                 <input type="text" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3.5 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 font-medium" placeholder="Seu nome" />
-               </div>
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label>
-                 <input type="email" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3.5 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 font-medium" placeholder="seu@email.com" />
-               </div>
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label>
-                 <textarea rows={4} className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3.5 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 font-medium resize-none" placeholder="Como posso ajudar?"></textarea>
-               </div>
-               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all duration-300 text-sm uppercase tracking-wide">
-                 Enviar Mensagem
-               </button>
-            </form>
+          <div className="flex flex-col items-center justify-center mb-4">
+             <span className="text-slate-500 text-sm uppercase tracking-widest font-bold">Ou se preferir</span>
+             <i className="fas fa-chevron-down text-slate-600 mt-2 animate-bounce"></i>
           </div>
 
+          {/* 2. CONTACT GRID: INFO + FORM */}
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+             
+             {/* LEFT: DIRECT CONTACT INFO */}
+             <div className="flex flex-col justify-center h-full">
+                <h3 className="text-2xl font-bold text-white mb-8">Canais de Contato</h3>
+                <div className="space-y-6">
+                   <div className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                     <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-slate-700 shrink-0">
+                       <i className="fas fa-envelope"></i>
+                     </div>
+                     <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">E-mail</span>
+                        <a href="mailto:igormatos.dev@gmail.com" className="text-slate-200 font-medium group-hover:text-white transition-colors text-lg">igormatos.dev@gmail.com</a>
+                     </div>
+                   </div>
+
+                   <a href="https://linkedin.com/in/igormatos" target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                     <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors border border-slate-700 shrink-0">
+                       <i className="fab fa-linkedin-in"></i>
+                     </div>
+                     <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">LinkedIn</span>
+                        <span className="text-slate-200 font-medium group-hover:text-white transition-colors text-lg">/in/igormatos</span>
+                     </div>
+                   </a>
+
+                   <a href={`https://wa.me/${content.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                     <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-green-400 group-hover:bg-green-600 group-hover:text-white transition-colors border border-slate-700 shrink-0">
+                       <i className="fab fa-whatsapp"></i>
+                     </div>
+                     <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">WhatsApp</span>
+                        <span className="text-slate-200 font-medium group-hover:text-white transition-colors text-lg">Falar agora</span>
+                     </div>
+                   </a>
+                </div>
+             </div>
+
+             {/* RIGHT: CONTACT FORM (PRIORITIZED) */}
+             <div className="bg-white rounded-3xl p-8 shadow-2xl relative">
+                <h3 className="text-2xl font-bold mb-6 text-slate-800">Envie uma mensagem</h3>
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label>
+                     <input type="text" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all placeholder:text-slate-400 font-medium text-slate-900" placeholder="Seu nome" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label>
+                     <input type="email" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all placeholder:text-slate-400 font-medium text-slate-900" placeholder="seu@email.com" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label>
+                     <textarea rows={4} className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all placeholder:text-slate-400 font-medium text-slate-900 resize-none" placeholder="Como posso ajudar?"></textarea>
+                   </div>
+                   <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-sm uppercase tracking-wide flex items-center justify-center gap-2">
+                     <i className="fab fa-whatsapp text-lg"></i> Enviar Mensagem
+                   </button>
+                </form>
+             </div>
+
+          </div>
         </div>
       </section>
 
