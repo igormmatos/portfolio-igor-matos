@@ -42,44 +42,53 @@ export interface FormSubmission {
   status?: ProjectStatus;
 }
 
-// --- NOVAS INTERFACES PARA A LANDING PAGE ---
+// --- PORTFOLIO & SITE CONTENT (NORMALIZED) ---
 
 export interface PortfolioProject {
   id: string;
   title: string;
-  role?: string; // Novo campo: Papel no projeto
+  role?: string;
   description: string;
-  technologies: string; // Ex: "React, Node.js"
+  technologies: string;
   githubUrl?: string;
   liveUrl?: string;
-  imageUrl?: string; // Opcional, usaremos placeholder se não houver
+  imageUrl?: string;
 }
 
-export interface SiteService {
+export interface ProfileInfo {
+  id?: string;
+  displayName: string;
+  headline: string;
+  bio: string;
+  whatsapp: string;
+  email: string;
+  linkedinUrl?: string;
+}
+
+export interface ServiceItem {
   id: string;
   title: string;
   description: string;
-  icon: string; // FontAwesome class
+  icon: string;
+  displayOrder: number;
 }
 
-export interface SiteCompetency {
+export interface CompetencyItem {
   id: string;
   title: string;
-  subtitle?: string; // Novo campo: Descrição curta
+  subtitle?: string;
   icon: string;
-  items: string[];
+  items: string[]; // Agora mapeia para text[] do postgres
   colorTheme: 'blue' | 'indigo' | 'cyan';
+  displayOrder: number;
 }
 
-export interface SiteContent {
-  profileName: string;
-  profileTitle: string;
-  profileBio: string;
-  whatsappNumber: string;
-  services: SiteService[];
-  competencies: SiteCompetency[];
-}
-
-export interface AppState {
-  submissions: FormSubmission[];
+export interface JourneyItem {
+  id: string;
+  title: string;
+  company?: string;
+  period?: string;
+  description: string;
+  type: 'work' | 'education';
+  displayOrder: number;
 }
