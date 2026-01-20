@@ -68,7 +68,12 @@ const AdminDashboard: React.FC = () => {
   // --- SUBMISSION HANDLERS ---
   const selectedSubmission = submissions.find(s => s.id === selectedSubId);
   
-  const handleDeleteSubmission = (id: string) => {
+  const handleDeleteSubmission = (id: string, e?: React.MouseEvent) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
     if (id === 'demo-example') {
         showNotification('Este é um exemplo de visualização e não pode ser excluído.', 'error');
         return;
@@ -142,7 +147,11 @@ const AdminDashboard: React.FC = () => {
     showNotification('Projeto salvo com sucesso!', 'success');
   };
 
-  const handleDeleteProject = (id: string) => {
+  const handleDeleteProject = (id: string, e?: React.MouseEvent) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     if (window.confirm('Excluir projeto do portfólio?')) {
       storageService.deleteProject(id);
       refreshData();
@@ -173,12 +182,20 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const handleDeleteService = (index: number) => {
+  const handleDeleteService = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     if (!siteContent) return;
     if (window.confirm('Remover este serviço?')) {
       const newServices = [...siteContent.services];
       newServices.splice(index, 1);
-      setSiteContent({ ...siteContent, services: newServices });
+      
+      const newContent = { ...siteContent, services: newServices };
+      setSiteContent(newContent);
+      storageService.saveSiteContent(newContent); // Auto-save for better UX
+      showNotification('Serviço removido e salvo.');
     }
   };
 
@@ -187,6 +204,7 @@ const AdminDashboard: React.FC = () => {
     const newComp: SiteCompetency = {
       id: Math.random().toString(36).substr(2, 9),
       title: 'Nova Competência',
+      subtitle: 'Descrição da competência',
       icon: 'fas fa-star',
       items: ['Item 1', 'Item 2'],
       colorTheme: 'blue'
@@ -197,12 +215,20 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const handleDeleteCompetency = (index: number) => {
+  const handleDeleteCompetency = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     if (!siteContent) return;
     if (window.confirm('Remover esta competência?')) {
       const newComps = [...siteContent.competencies];
       newComps.splice(index, 1);
-      setSiteContent({ ...siteContent, competencies: newComps });
+      
+      const newContent = { ...siteContent, competencies: newComps };
+      setSiteContent(newContent);
+      storageService.saveSiteContent(newContent); // Auto-save for better UX
+      showNotification('Competência removida e salva.');
     }
   };
 
@@ -213,6 +239,7 @@ const AdminDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-slate-800 mb-6">Painel Administrativo</h1>
         <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
           <button 
+            type="button"
             onClick={() => setActiveTab('submissions')}
             className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
               activeTab === 'submissions' 
@@ -223,6 +250,7 @@ const AdminDashboard: React.FC = () => {
             <i className="fas fa-list-alt mr-2"></i> Requisitos ({submissions.length})
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab('portfolio')}
             className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
               activeTab === 'portfolio' 
@@ -233,6 +261,7 @@ const AdminDashboard: React.FC = () => {
             <i className="fas fa-briefcase mr-2"></i> Portfólio ({projects.length})
           </button>
           <button 
+            type="button"
             onClick={() => setActiveTab('content')}
             className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${
               activeTab === 'content' 
@@ -295,6 +324,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex items-center gap-2">
                        <button 
                         onClick={handleCopyRequirement}
+                        type="button"
                         className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded border border-indigo-100 mr-2 flex items-center gap-2 text-sm font-semibold"
                         title="Copiar texto do requisito"
                        >
@@ -308,7 +338,14 @@ const AdminDashboard: React.FC = () => {
                       >
                         {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
-                      <button onClick={() => handleDeleteSubmission(selectedSubmission.id)} className="text-red-500 p-2 hover:bg-red-50 rounded"><i className="fas fa-trash"></i></button>
+                      <button 
+                        type="button"
+                        onClick={(e) => handleDeleteSubmission(selectedSubmission.id, e)} 
+                        className="text-red-500 p-2 hover:bg-red-50 rounded"
+                        title="Excluir Requisito"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
                     </div>
                  </div>
                  
@@ -344,7 +381,8 @@ const AdminDashboard: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
                <h3 className="font-bold text-lg">Projetos Ativos</h3>
                <button 
-                onClick={() => setEditingProject({ id: '', title: '', description: '', technologies: '' })}
+                type="button"
+                onClick={() => setEditingProject({ id: '', title: '', description: '', technologies: '', role: '' })}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700"
                >
                  <i className="fas fa-plus mr-2"></i> Novo Projeto
@@ -356,12 +394,13 @@ const AdminDashboard: React.FC = () => {
                 <div key={p.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-start group">
                   <div>
                     <h4 className="font-bold text-lg text-slate-900">{p.title}</h4>
+                    <p className="text-xs text-indigo-600 font-bold mb-1 uppercase">{p.role}</p>
                     <p className="text-slate-500 text-sm mb-2">{p.description}</p>
                     <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded">{p.technologies}</span>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setEditingProject(p)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded"><i className="fas fa-edit"></i></button>
-                    <button onClick={() => handleDeleteProject(p.id)} className="p-2 text-red-500 hover:bg-red-50 rounded"><i className="fas fa-trash"></i></button>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setEditingProject(p)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded"><i className="fas fa-edit"></i></button>
+                    <button type="button" onClick={(e) => handleDeleteProject(p.id, e)} className="p-2 text-red-500 hover:bg-red-50 rounded"><i className="fas fa-trash"></i></button>
                   </div>
                 </div>
               ))}
@@ -381,6 +420,25 @@ const AdminDashboard: React.FC = () => {
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
                         value={editingProject.title}
                         onChange={e => setEditingProject({...editingProject, title: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Meu Papel (Ex: Tech Lead)</label>
+                      <input 
+                        type="text" 
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
+                        value={editingProject.role || ''}
+                        onChange={e => setEditingProject({...editingProject, role: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">URL Imagem (Opcional)</label>
+                      <input 
+                        type="text" 
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
+                        value={editingProject.imageUrl || ''}
+                        onChange={e => setEditingProject({...editingProject, imageUrl: e.target.value})}
+                        placeholder="https://..."
                       />
                     </div>
                     <div>
@@ -483,11 +541,11 @@ const AdminDashboard: React.FC = () => {
             <div className="space-y-4">
               {siteContent.services.map((svc, idx) => (
                 <div key={svc.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
-                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <div className="absolute top-2 right-2">
                       <button 
                         type="button" 
-                        onClick={() => handleDeleteService(idx)} 
-                        className="text-slate-400 hover:text-red-500 p-1"
+                        onClick={(e) => handleDeleteService(idx, e)} 
+                        className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
                         title="Remover Serviço"
                       >
                         <i className="fas fa-trash-alt"></i>
@@ -561,11 +619,11 @@ const AdminDashboard: React.FC = () => {
             <div className="space-y-4">
               {siteContent.competencies.map((comp, idx) => (
                 <div key={comp.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
-                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <div className="absolute top-2 right-2">
                       <button 
                         type="button" 
-                        onClick={() => handleDeleteCompetency(idx)} 
-                        className="text-slate-400 hover:text-red-500 p-1"
+                        onClick={(e) => handleDeleteCompetency(idx, e)} 
+                        className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
                         title="Remover Competência"
                       >
                         <i className="fas fa-trash-alt"></i>
@@ -612,6 +670,18 @@ const AdminDashboard: React.FC = () => {
                           <option value="cyan">Cyan (Ciano)</option>
                         </select>
                      </div>
+                   </div>
+                   <div className="mb-2">
+                      <label className="text-[10px] uppercase font-bold text-slate-400">Descrição Curta (Subtítulo)</label>
+                      <input 
+                        className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        value={comp.subtitle || ''}
+                        onChange={e => {
+                          const newComps = [...siteContent.competencies];
+                          newComps[idx].subtitle = e.target.value;
+                          setSiteContent({...siteContent, competencies: newComps});
+                        }}
+                      />
                    </div>
                    <div>
                       <label className="text-[10px] uppercase font-bold text-slate-400">Itens (separados por vírgula ou nova linha)</label>
