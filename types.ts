@@ -61,12 +61,21 @@ export interface SiteService {
   icon: string; // FontAwesome class
 }
 
+export interface SiteCompetency {
+  id: string;
+  title: string;
+  icon: string;
+  items: string[];
+  colorTheme: 'blue' | 'indigo' | 'cyan';
+}
+
 export interface SiteContent {
   profileName: string;
   profileTitle: string;
   profileBio: string;
   whatsappNumber: string;
   services: SiteService[];
+  competencies: SiteCompetency[];
 }
 
 export interface AppState {

@@ -1,10 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { storageService } from '../services/storage';
-import { FormSubmission, ProjectStatus, PortfolioProject, SiteContent, SiteService } from '../types';
+import { FormSubmission, ProjectStatus, PortfolioProject, SiteContent, SiteService, SiteCompetency } from '../types';
 import { REQUIREMENT_FORM_FIELDS } from '../constants';
 
 type AdminTab = 'submissions' | 'portfolio' | 'content';
+
+// Exemplo estático para visualização (Requisito "eozap")
+const EXAMPLE_SUBMISSION: FormSubmission = {
+  id: 'demo-example',
+  timestamp: new Date().toISOString(),
+  userName: 'Exemplo de Visualização',
+  userEmail: 'exemplo@demo.com',
+  userPhone: '(11) 99999-9999',
+  isWhatsApp: true,
+  status: ProjectStatus.NOT_STARTED,
+  answers: {
+    projectName: 'eozap',
+    projectGoal: 'converter conversas em vendas',
+    platformType: 'both',
+    userRoles: 'clientes - conversa.\nAdministrador - gestão geral',
+    keyFeatures: '1. Login com Google\n2. Cadastro de produtos\n3. Relatório de vendas mensal',
+    niceToHaveFeatures: 'Integração com redes sociais, Modo offline, Exportação para Excel',
+    hasPayment: 'yes',
+    paymentProvider: 'Sim'
+  }
+};
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('submissions');
@@ -28,7 +49,11 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const refreshData = () => {
-    setSubmissions(storageService.getSubmissions());
+    // Carrega submissões reais e adiciona o exemplo ao final
+    const storedSubmissions = storageService.getSubmissions();
+    const allSubmissions = [...storedSubmissions, EXAMPLE_SUBMISSION];
+    
+    setSubmissions(allSubmissions);
     setProjects(storageService.getProjects());
     setSiteContent(storageService.getSiteContent());
   };
@@ -44,6 +69,10 @@ const AdminDashboard: React.FC = () => {
   const selectedSubmission = submissions.find(s => s.id === selectedSubId);
   
   const handleDeleteSubmission = (id: string) => {
+    if (id === 'demo-example') {
+        showNotification('Este é um exemplo de visualização e não pode ser excluído.', 'error');
+        return;
+    }
     if (window.confirm('Excluir requisito?')) {
       storageService.deleteSubmission(id);
       refreshData();
@@ -53,9 +82,39 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleStatusChange = (id: string, newStatus: ProjectStatus) => {
+    if (id === 'demo-example') {
+        // Apenas atualiza estado local para o exemplo
+        setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+        showNotification('Status do exemplo atualizado (apenas visual).');
+        return;
+    }
     storageService.updateSubmissionStatus(id, newStatus);
     refreshData();
     showNotification('Status atualizado.');
+  };
+
+  const handleCopyRequirement = () => {
+    if (!selectedSubmission) return;
+
+    const content = REQUIREMENT_FORM_FIELDS.map(field => {
+        const val = selectedSubmission.answers[field.id];
+        if (!val) return null;
+        const label = field.label;
+        let displayVal = val;
+         if (field.options) {
+             const opt = field.options.find(o => o.value === val);
+             if (opt) displayVal = opt.label;
+         }
+        return `*${label}*\n${displayVal}`;
+    }).filter(Boolean).join('\n\n');
+
+    const fullText = `📋 *Requisito: ${selectedSubmission.answers.projectName}*\n` +
+                     `👤 ${selectedSubmission.userName} | 📧 ${selectedSubmission.userEmail} | 📱 ${selectedSubmission.userPhone}\n` +
+                     `-----------------------------------\n\n` +
+                     content;
+
+    navigator.clipboard.writeText(fullText);
+    showNotification('Requisito copiado para a área de transferência!', 'success');
   };
 
   const getStatusColor = (status: ProjectStatus | undefined) => {
@@ -96,7 +155,7 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (siteContent) {
       storageService.saveSiteContent(siteContent);
-      showNotification('Conteúdo do site e serviços atualizados com sucesso!', 'success');
+      showNotification('Conteúdo atualizado com sucesso!', 'success');
     }
   };
 
@@ -120,6 +179,30 @@ const AdminDashboard: React.FC = () => {
       const newServices = [...siteContent.services];
       newServices.splice(index, 1);
       setSiteContent({ ...siteContent, services: newServices });
+    }
+  };
+
+  const handleAddCompetency = () => {
+    if (!siteContent) return;
+    const newComp: SiteCompetency = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: 'Nova Competência',
+      icon: 'fas fa-star',
+      items: ['Item 1', 'Item 2'],
+      colorTheme: 'blue'
+    };
+    setSiteContent({
+      ...siteContent,
+      competencies: [...siteContent.competencies, newComp]
+    });
+  };
+
+  const handleDeleteCompetency = (index: number) => {
+    if (!siteContent) return;
+    if (window.confirm('Remover esta competência?')) {
+      const newComps = [...siteContent.competencies];
+      newComps.splice(index, 1);
+      setSiteContent({ ...siteContent, competencies: newComps });
     }
   };
 
@@ -176,9 +259,14 @@ const AdminDashboard: React.FC = () => {
                     <div 
                       key={sub.id}
                       onClick={() => setSelectedSubId(sub.id)}
-                      className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors ${selectedSubId === sub.id ? 'bg-indigo-50 border-l-4 border-indigo-600' : ''}`}
+                      className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
+                         selectedSubId === sub.id ? 'bg-indigo-50 border-indigo-600' : 'border-transparent'
+                      }`}
                     >
-                      <h3 className="font-semibold text-slate-900 truncate">{sub.answers.projectName || 'Sem Título'}</h3>
+                      <h3 className="font-semibold text-slate-900 truncate">
+                        {sub.answers.projectName || 'Sem Título'} 
+                        {sub.id === 'demo-example' && <span className="ml-2 text-[10px] bg-slate-200 text-slate-600 px-1.5 rounded uppercase">Exemplo</span>}
+                      </h3>
                       <div className="flex justify-between items-center mt-1">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getStatusColor(sub.status)} font-bold`}>
                           {sub.status || ProjectStatus.NOT_STARTED}
@@ -198,10 +286,21 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                  <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-100">
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900">{selectedSubmission.answers.projectName}</h2>
+                      <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        {selectedSubmission.answers.projectName}
+                        {selectedSubmission.id === 'demo-example' && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Modo Visualização</span>}
+                      </h2>
                       <p className="text-slate-500 text-sm mt-1">{selectedSubmission.userName} • {selectedSubmission.userEmail}</p>
                     </div>
                     <div className="flex items-center gap-2">
+                       <button 
+                        onClick={handleCopyRequirement}
+                        className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded border border-indigo-100 mr-2 flex items-center gap-2 text-sm font-semibold"
+                        title="Copiar texto do requisito"
+                       >
+                         <i className="fas fa-copy"></i> Copiar
+                       </button>
+
                        <select 
                         value={selectedSubmission.status || ProjectStatus.NOT_STARTED}
                         onChange={(e) => handleStatusChange(selectedSubmission.id, e.target.value as ProjectStatus)}
@@ -230,7 +329,7 @@ const AdminDashboard: React.FC = () => {
                  </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl p-12">
+              <div className="h-full flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl p-12 bg-slate-50/50">
                 Selecione um item para ver detalhes
               </div>
             )}
@@ -453,6 +552,89 @@ const AdminDashboard: React.FC = () => {
                 className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 font-bold hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
               >
                 <i className="fas fa-plus-circle"></i> Adicionar Novo Serviço
+              </button>
+            </div>
+
+            <h3 className="font-bold text-xl mt-8 mb-6 pb-2 border-b flex justify-between items-center">
+              Competências
+            </h3>
+            <div className="space-y-4">
+              {siteContent.competencies.map((comp, idx) => (
+                <div key={comp.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
+                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteCompetency(idx)} 
+                        className="text-slate-400 hover:text-red-500 p-1"
+                        title="Remover Competência"
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                   </div>
+                   <div className="flex gap-2 mb-2">
+                     <div className="w-1/3">
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Título</label>
+                        <input 
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          value={comp.title}
+                          onChange={e => {
+                            const newComps = [...siteContent.competencies];
+                            newComps[idx].title = e.target.value;
+                            setSiteContent({...siteContent, competencies: newComps});
+                          }}
+                        />
+                     </div>
+                     <div className="w-1/3">
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Ícone</label>
+                        <input 
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-mono bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          value={comp.icon}
+                          onChange={e => {
+                            const newComps = [...siteContent.competencies];
+                            newComps[idx].icon = e.target.value;
+                            setSiteContent({...siteContent, competencies: newComps});
+                          }}
+                        />
+                     </div>
+                     <div className="w-1/3">
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Cor (Tema)</label>
+                        <select 
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          value={comp.colorTheme}
+                          onChange={e => {
+                            const newComps = [...siteContent.competencies];
+                            newComps[idx].colorTheme = e.target.value as any;
+                            setSiteContent({...siteContent, competencies: newComps});
+                          }}
+                        >
+                          <option value="blue">Blue (Azul)</option>
+                          <option value="indigo">Indigo (Roxo)</option>
+                          <option value="cyan">Cyan (Ciano)</option>
+                        </select>
+                     </div>
+                   </div>
+                   <div>
+                      <label className="text-[10px] uppercase font-bold text-slate-400">Itens (separados por vírgula ou nova linha)</label>
+                      <textarea 
+                        rows={3}
+                        className="w-full border border-slate-300 rounded px-2 py-1 text-sm bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        value={comp.items.join('\n')}
+                        onChange={e => {
+                          const newComps = [...siteContent.competencies];
+                          newComps[idx].items = e.target.value.split(/\n|,/).map(s => s.trim()).filter(Boolean);
+                          setSiteContent({...siteContent, competencies: newComps});
+                        }}
+                      />
+                   </div>
+                </div>
+              ))}
+              
+              <button 
+                type="button" 
+                onClick={handleAddCompetency}
+                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 font-bold hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-plus-circle"></i> Adicionar Nova Competência
               </button>
             </div>
 
