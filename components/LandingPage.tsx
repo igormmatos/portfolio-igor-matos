@@ -26,6 +26,14 @@ const LandingPage: React.FC = () => {
     }
   };
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const getColorClasses = (theme: string) => {
     switch(theme) {
       case 'blue': return { iconBg: 'bg-blue-900/30', iconText: 'text-blue-400', check: 'text-blue-500' };
@@ -63,14 +71,16 @@ const LandingPage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a 
-                href="#journey" 
+                href="#journey"
+                onClick={(e) => scrollToSection(e, 'journey')} 
                 className="px-8 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700 text-center flex items-center justify-center gap-2"
               >
                 <i className="fab fa-linkedin text-lg"></i>
                 Ver Perfil Profissional
               </a>
               <a 
-                href="#contact"
+                href="#services"
+                onClick={(e) => scrollToSection(e, 'services')} 
                 className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/25 text-center"
               >
                 Contratar Meus Serviços
@@ -357,7 +367,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col gap-16">
           
           {/* 1. CENTRALIZED IDEA CARD (HIGHLIGHT) */}
-          <div className="w-full bg-gradient-to-r from-indigo-900 to-slate-900 p-1 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-8 duration-700">
+          <div id="start-project" className="w-full bg-gradient-to-r from-indigo-900 to-slate-900 p-1 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-8 duration-700 scroll-mt-24">
              <div className="bg-slate-900 rounded-[1.3rem] p-8 md:p-12 text-center relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
                  <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px]"></div>
@@ -387,7 +397,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* 2. CONTACT GRID: INFO + FORM */}
-          <div className="grid md:grid-cols-2 gap-12 items-start">
+          <div id="contact-channels" className="grid md:grid-cols-2 gap-12 items-start scroll-mt-24">
              
              {/* LEFT: DIRECT CONTACT INFO */}
              <div className="flex flex-col justify-center h-full">

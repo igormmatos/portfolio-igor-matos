@@ -31,6 +31,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     window.location.reload();
   };
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className={`min-h-screen flex flex-col ${isLandingPage ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       <header className={`border-b no-print transition-colors ${
@@ -55,9 +63,41 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="flex items-center gap-4">
             {isLandingPage && (
               <nav className="hidden md:flex gap-6 mr-4">
-                <a href="#about" className="text-sm font-medium hover:text-indigo-400 transition-colors">Sobre</a>
-                <a href="#services" className="text-sm font-medium hover:text-indigo-400 transition-colors">Serviços</a>
-                <a href="#portfolio" className="text-sm font-medium hover:text-indigo-400 transition-colors">Portfólio</a>
+                <a 
+                  href="#journey" 
+                  onClick={(e) => scrollToSection(e, 'journey')}
+                  className="text-sm font-medium hover:text-indigo-400 transition-colors"
+                >
+                  Sobre
+                </a>
+                <a 
+                  href="#portfolio" 
+                  onClick={(e) => scrollToSection(e, 'portfolio')}
+                  className="text-sm font-medium hover:text-indigo-400 transition-colors"
+                >
+                  Portfólio
+                </a>
+                <a 
+                  href="#services" 
+                  onClick={(e) => scrollToSection(e, 'services')}
+                  className="text-sm font-medium hover:text-indigo-400 transition-colors"
+                >
+                  Serviços
+                </a>
+                <a 
+                  href="#start-project"
+                  onClick={(e) => scrollToSection(e, 'start-project')}
+                  className="text-sm font-medium hover:text-indigo-400 transition-colors"
+                >
+                  Seu Projeto
+                </a>
+                <a 
+                  href="#contact-channels" 
+                  onClick={(e) => scrollToSection(e, 'contact-channels')}
+                  className="text-sm font-medium hover:text-indigo-400 transition-colors"
+                >
+                  Contato
+                </a>
               </nav>
             )}
 
