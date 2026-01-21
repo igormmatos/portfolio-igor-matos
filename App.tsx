@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { storageService } from './services/storage';
@@ -211,22 +212,25 @@ const App: React.FC = () => {
   }
 
   return (
-    <HashRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/requirements" element={<UserForm />} />
-          <Route 
-            path="/login" 
-            element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={() => {}} />} 
-          />
-          <Route 
-            path="/admin" 
-            element={isAdmin ? <AdminDashboard /> : <Navigate to="/login" />} 
-          />
-        </Routes>
-      </Layout>
-    </HashRouter>
+    <>
+      <HashRouter>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/requirements" element={<UserForm />} />
+            <Route 
+              path="/login" 
+              element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={() => {}} />} 
+            />
+            <Route 
+              path="/admin" 
+              element={isAdmin ? <AdminDashboard /> : <Navigate to="/login" />} 
+            />
+          </Routes>
+        </Layout>
+      </HashRouter>
+      <Analytics />
+    </>
   );
 };
 

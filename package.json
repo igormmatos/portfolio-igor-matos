@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "@supabase/supabase-js": "^2.39.7",
+    "@vercel/analytics": "^1.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0",
-    "@fortawesome/fontawesome-free": "^6.5.1",
-    "@supabase/supabase-js": "^2.39.7"
+    "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
