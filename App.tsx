@@ -4,6 +4,7 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { storageService } from './services/storage';
 import { supabase } from './services/supabase';
+import { getOptimizedImageUrl } from './utils/image';
 
 // Lazy loading dos componentes pesados
 const UserForm = React.lazy(() => import('./components/UserForm'));
@@ -17,9 +18,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Verifica se estamos na Landing Page (rota raiz) para mudar o estilo do header
   const isLandingPage = location.pathname === '/';
 
-  const logoSrc = isLandingPage 
-    ? "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX3NlbV9mdW5kby5wbmciLCJpYXQiOjE3Njg5NDU3NjgsImV4cCI6MTgwMDQ4MTc2OH0.2h7K3D9NFx1wO1VospI5Ix3X8T9uv_3J4WmNAW11ncU"
-    : "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_baner_claro.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX2JhbmVyX2NsYXJvLnBuZyIsImlhdCI6MTc2OTAwMDk0NywiZXhwIjoxODAwNTM2OTQ3fQ.izPp0QjlfH1bqvU0RgZxqZtFxOzGfmZ5fMYJxwk5fXI";
+  // URLs originais
+  const rawLogoSrc = isLandingPage 
+    ? "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/logo_sem_fundo.png"
+    : "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/logo_baner_claro.png";
+
+  // Aplica otimização: Largura 300px é suficiente para o header
+  const logoSrc = getOptimizedImageUrl(rawLogoSrc, 300);
 
   useEffect(() => {
     // 1. Check initial session
