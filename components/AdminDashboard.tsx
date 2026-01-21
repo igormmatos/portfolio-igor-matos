@@ -237,17 +237,21 @@ const AdminDashboard: React.FC = () => {
   const confirmDelete = async () => {
       const { id, tableName, deleteFn, setListFn } = deleteModal;
       
-      if (!id || !deleteFn || !setListFn) return;
+      if (id === undefined || id === null || !deleteFn || !setListFn) return;
 
       try {
-        // Atualização Otimista
+        // Atualização Otimista (Frontend)
         setListFn((prevList: any[]) => prevList.filter((item) => item.id !== id));
 
-        if (id && id.trim() !== '') {
+        // Verifica se é um item novo (temporário ou sem ID salvo)
+        const isTemp = id.toString().startsWith('temp_') || id === '';
+
+        if (!isTemp) {
             await deleteFn(id);
+            showNotification('Item excluído com sucesso!', 'success');
+        } else {
+            showNotification('Item removido da lista (não salvo).', 'success');
         }
-        
-        showNotification('Item excluído com sucesso!', 'success');
         
         if (activeTab === 'submissions' && selectedSubId === id) {
             setSelectedSubId(null);
@@ -542,7 +546,7 @@ const AdminDashboard: React.FC = () => {
             {/* --- TAB: SERVICES --- */}
             {activeTab === 'services' && (
             <div className="max-w-5xl mx-auto space-y-6 pb-10">
-                <button type="button" onClick={() => setServices([...services, { id: '', title: 'Novo Serviço', description: '', icon: 'fas fa-star', displayOrder: services.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Serviço</button>
+                <button type="button" onClick={() => setServices([...services, { id: `temp_${Date.now()}`, title: 'Novo Serviço', description: '', icon: 'fas fa-star', displayOrder: services.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Serviço</button>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                     {services.map((svc, idx) => (
@@ -577,7 +581,7 @@ const AdminDashboard: React.FC = () => {
             {/* --- TAB: COMPETENCIES --- */}
             {activeTab === 'competencies' && (
                 <div className="max-w-5xl mx-auto space-y-6 pb-10">
-                    <button type="button" onClick={() => setCompetencies([...competencies, { id: '', title: 'Nova Competência', icon: 'fas fa-star', items: [], colorTheme: 'blue', displayOrder: competencies.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Competência</button>
+                    <button type="button" onClick={() => setCompetencies([...competencies, { id: `temp_${Date.now()}`, title: 'Nova Competência', icon: 'fas fa-star', items: [], colorTheme: 'blue', displayOrder: competencies.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Competência</button>
                     
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {competencies.map((comp, idx) => (
@@ -628,7 +632,7 @@ const AdminDashboard: React.FC = () => {
             {/* --- TAB: JOURNEY --- */}
             {activeTab === 'journey' && (
                 <div className="max-w-5xl mx-auto space-y-6 pb-10">
-                    <button type="button" onClick={() => setJourney([...journey, { id: '', title: 'Novo Cargo', description: '', type: 'work', displayOrder: journey.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Item na Jornada</button>
+                    <button type="button" onClick={() => setJourney([...journey, { id: `temp_${Date.now()}`, title: 'Novo Cargo', description: '', type: 'work', displayOrder: journey.length + 1 }])} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:bg-white hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"><i className="fas fa-plus"></i> Adicionar Item na Jornada</button>
                     
                     <div className="space-y-4">
                         {journey.map((item, idx) => (
