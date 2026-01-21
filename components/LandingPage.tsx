@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/storage';
@@ -71,100 +70,140 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white scroll-smooth">
-      {/* 1. HERO SECTION */}
-      <section id="hero" className="relative min-h-screen flex items-center pt-24 overflow-hidden border-b border-slate-800">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2"></div>
+      {/* 1. HERO SECTION - REDESIGNED */}
+      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900 border-b border-slate-800">
+        
+        {/* Background Layer - Clean, No Image */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="absolute inset-0 bg-slate-900"></div>
+            {/* Abstract Gradients for Atmosphere - Adjusted to match page theme */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/10 via-slate-900/40 to-slate-900"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/80 via-transparent to-slate-900"></div>
+        </div>
 
-        <div className="max-w-6xl mx-auto px-4 w-full relative z-10 grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1 animate-in slide-in-from-left-8 duration-700 fade-in">
-            <span className="inline-block py-1.5 px-4 rounded-full bg-slate-800/80 border border-slate-700 backdrop-blur-sm text-green-400 text-xs font-bold uppercase tracking-wider mb-8">
-              <i className="fas fa-circle text-[8px] mr-2 align-middle"></i> Disponível para novos projetos
-            </span>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 tracking-tight leading-tight text-white">
-              Olá, eu sou {profile.displayName}
-            </h1>
-            <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-              {profile.headline}
-            </h2>
-             <h2 className="text-xl md:text-2xl text-slate-300 font-light mb-6">
-              Transformando desafios em resultados com tecnologia e liderança.
-            </h2>
-            <p className="text-slate-300 text-lg leading-relaxed mb-10 max-w-lg">
-              {profile.bio}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a href="https://www.linkedin.com/in/igor-mmatos/" target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700 text-center flex items-center justify-center gap-2">
-                <i className="fab fa-linkedin text-lg"></i> Ver Perfil Profissional
-              </a>
-              <a href="#services" onClick={(e) => scrollToSection(e, 'services')} className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/25 text-center">
-                Contratar Serviços
-              </a>
+        {/* Content Layer - Adjusted padding for mobile to prevent cut-off */}
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 flex flex-col items-center text-center pt-32 pb-16 md:py-0">
+            
+            {/* Badge */}
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 mb-8">
+               <span className="inline-flex items-center py-1.5 px-4 rounded-full bg-slate-800/60 border border-slate-700 backdrop-blur-md text-green-400 text-xs font-bold uppercase tracking-wider shadow-lg">
+                  <span className="relative flex h-2 w-2 mr-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  Disponível para novos projetos
+               </span>
             </div>
-          </div>
-          
-          <div className="order-1 md:order-2 flex justify-center items-center animate-in slide-in-from-right-8 duration-700 fade-in">
-            <div className="relative w-full max-w-[350px] md:max-w-[420px]">
-              {/* Glow effect behind */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-indigo-600/20 rounded-full blur-[60px] -z-10"></div>
-              
-              {/* Card Container */}
-              <div className="relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-800/40 backdrop-blur-sm shadow-2xl">
-                 {/* Background Gradient inside card */}
-                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10 opacity-60"></div>
-                 
-                 <img 
-                    src="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/Matos_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9NYXRvc19zZW1fZnVuZG8ucG5nIiwiaWF0IjoxNzY4OTM3ODE4LCJleHAiOjE4MDA0NzM4MTh9.7--4FYCbQH_hA0mrCnDqLkkdMiSimiu2Ya61fFfnSdk" 
-                    alt="Profile" 
-                    className="w-full h-auto object-cover relative z-10 transform hover:scale-105 transition-transform duration-700"
-                 />
-                 
-                 {/* Bottom Fade to blend torso */}
-                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent z-20"></div>
-              </div>
+
+            {/* Main Text */}
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+               <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight leading-tight text-white drop-shadow-xl text-shadow-lg shadow-black/50 pb-2">
+                 Olá, eu sou {profile.displayName}
+               </h1>
+               <h2 className="text-2xl md:text-5xl font-extrabold mb-8 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-cyan-300 drop-shadow-sm pb-2">
+                 {profile.headline}
+               </h2>
+               
+               <div className="w-24 h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mx-auto mb-8 shadow-lg shadow-indigo-500/50"></div>
+
+               <h3 className="text-lg md:text-2xl text-slate-100 font-light mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+                 Transformando desafios em resultados com tecnologia e liderança.
+               </h3>
+               
+               <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-light drop-shadow">
+                 {profile.bio}
+               </p>
             </div>
-          </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+               <a href="https://www.linkedin.com/in/igor-mmatos/" target="_blank" rel="noopener noreferrer" 
+                  className="px-8 py-4 bg-slate-800/80 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-600 hover:border-slate-500 transition-all backdrop-blur-sm flex items-center justify-center gap-3 group shadow-lg">
+                  <i className="fab fa-linkedin text-xl group-hover:scale-110 transition-transform"></i> 
+                  <span>Ver Perfil Profissional</span>
+               </a>
+               <a href="#services" onClick={(e) => scrollToSection(e, 'services')} 
+                  className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
+                  <span>Contratar Serviços</span>
+                  <i className="fas fa-arrow-right"></i>
+               </a>
+            </div>
+
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden md:block opacity-50 hover:opacity-100 transition-opacity">
+           <a href="#journey" onClick={(e) => scrollToSection(e, 'journey')} className="text-slate-400 hover:text-white">
+              <i className="fas fa-chevron-down text-2xl"></i>
+           </a>
         </div>
       </section>
 
-      {/* 2. JORNADA (Dynamic from DB) */}
+      {/* 2. JORNADA (Dynamic from DB) - UPDATED LAYOUT */}
       <section id="journey" className="py-24 bg-slate-900 relative">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Minha Jornada</h2>
             <div className="w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
             <p className="mt-4 text-slate-400 text-lg">Tecnologia, Liderança e Resultados</p>
           </div>
 
-          <div className="space-y-12">
-            {journey.map((item) => (
-              <div key={item.id} className="relative pl-8 md:pl-0 border-l-2 border-slate-800 md:border-none">
-                <div className="md:flex items-start gap-6 group">
-                  <div className="hidden md:flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                      <i className={`fas ${item.type === 'education' ? 'fa-graduation-cap' : 'fa-briefcase'}`}></i>
-                    </div>
-                    <div className="h-full w-0.5 bg-slate-800 my-2"></div>
-                  </div>
-                  <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 flex-1 hover:border-indigo-500/30 transition-colors">
-                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-white">{item.title}</h3>
-                        <div className="text-right">
-                           <span className="text-indigo-400 font-mono text-sm block uppercase">{item.company}</span>
-                           {item.period && <span className="text-slate-500 text-xs">{item.period}</span>}
+          <div className="grid lg:grid-cols-12 gap-12 items-start">
+              {/* Coluna Esquerda: Jornada (Aprox 70%) */}
+              <div className="lg:col-span-8 space-y-12">
+                {journey.map((item) => (
+                  <div key={item.id} className="relative pl-8 md:pl-0 border-l-2 border-slate-800 md:border-none">
+                    <div className="md:flex items-start gap-6 group">
+                      <div className="hidden md:flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <i className={`fas ${item.type === 'education' ? 'fa-graduation-cap' : 'fa-briefcase'}`}></i>
                         </div>
-                     </div>
-                     <p className="text-slate-400 leading-relaxed">{item.description}</p>
+                        <div className="h-full w-0.5 bg-slate-800 my-2"></div>
+                      </div>
+                      <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 flex-1 hover:border-indigo-500/30 transition-colors shadow-sm hover:shadow-md">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-white">{item.title}</h3>
+                            <div className="text-right">
+                              <span className="text-indigo-400 font-mono text-sm block uppercase">{item.company}</span>
+                              {item.period && <span className="text-slate-500 text-xs">{item.period}</span>}
+                            </div>
+                        </div>
+                        <p className="text-slate-400 leading-relaxed">{item.description}</p>
+                      </div>
+                    </div>
                   </div>
+                ))}
+                
+                {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
+
+                <div className="mt-12 text-center lg:text-left">
+                    <a href="#" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
                 </div>
               </div>
-            ))}
-            
-            {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
-          </div>
-          
-          <div className="mt-12 text-center">
-             <a href="#" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
+
+              {/* Coluna Direita: Imagem do Profissional (Aprox 30%) - HIDDEN ON MOBILE */}
+              <div className="hidden lg:block lg:col-span-4 mt-12 lg:mt-0 order-last lg:order-none">
+                  <div className="lg:sticky lg:top-32">
+                      <div className="relative rounded-3xl overflow-hidden border border-slate-700 shadow-2xl bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950">
+                          {/* Elemento decorativo de fundo */}
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl"></div>
+                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
+                          
+                          <img 
+                            src="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/Matos_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9NYXRvc19zZW1fZnVuZG8ucG5nIiwiaWF0IjoxNzY4OTM3ODE4LCJleHAiOjE4MDA0NzM4MTh9.7--4FYCbQH_hA0mrCnDqLkkdMiSimiu2Ya61fFfnSdk" 
+                            alt="Igor Matos Profissional" 
+                            className="w-full h-auto object-cover relative z-10 hover:scale-105 transition-transform duration-700"
+                          />
+                          
+                          {/* Gradiente na base da imagem para integrar com o card */}
+                          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-950/80 to-transparent z-20"></div>
+                      </div>
+                      
+                      <div className="mt-6 text-center">
+                          <p className="text-slate-400 text-sm italic">"Compromisso com a excelência técnica e resultados reais."</p>
+                      </div>
+                  </div>
+              </div>
           </div>
         </div>
       </section>
@@ -283,7 +322,7 @@ const LandingPage: React.FC = () => {
                  <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-indigo-500/30"><i className="fas fa-lightbulb"></i></div>
                     <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Tem uma ideia de projeto?</h3>
-                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">Utilize minha ferramenta inteligente <b>RequirementFlow</b> para estruturar seus requisitos em minutos.</p>
+                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">Utilize minha ferramenta inteligente <b>PonteDigital</b> para estruturar seus requisitos em minutos.</p>
                     <Link to="/requirements" className="px-8 py-4 bg-white text-indigo-900 font-bold text-lg rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all shadow-xl hover:shadow-white/20 flex items-center gap-3"><i className="fas fa-pen-nib"></i> Estruturar Minha Ideia Agora</Link>
                  </div>
              </div>

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { REQUIREMENT_FORM_FIELDS } from '../constants';
 import { FieldType, FormSubmission } from '../types';
 import { storageService } from '../services/storage';
@@ -10,6 +9,22 @@ const UserForm: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '', isWhatsApp: true });
+  
+  // State para o Modal de Boas-vindas
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Verifica se é a primeira visita ao montar o componente
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    if (!hasSeenWelcome) {
+      setShowWelcomeModal(true);
+    }
+  }, []);
+
+  const handleStart = () => {
+    localStorage.setItem('hasSeenWelcome', 'true');
+    setShowWelcomeModal(false);
+  };
 
   // Filter fields based on dependencies
   const visibleFields = REQUIREMENT_FORM_FIELDS.filter(field => {
@@ -96,7 +111,35 @@ const UserForm: React.FC = () => {
   const currentField = step > 0 ? visibleFields[step - 1] : null;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-12">
+    <div className="max-w-xl mx-auto px-4 py-12 relative">
+      
+      {/* MODAL DE BOAS-VINDAS */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-500">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center animate-in zoom-in-95 duration-500 border border-slate-100 relative overflow-hidden">
+             {/* Decoração Superior */}
+             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+
+             <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <i className="fas fa-lightbulb text-2xl"></i>
+             </div>
+
+             <h2 className="text-2xl font-bold text-slate-900 mb-4">Bem-vindo ao PonteDigital</h2>
+
+             <p className="text-slate-600 mb-8 leading-relaxed text-sm md:text-base">
+                Você está prestes a transformar sua ideia em um projeto real. Mesmo sem conhecimento técnico, aqui você estrutura sua ideia com clareza e rapidez.
+             </p>
+
+             <button
+                onClick={handleStart}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 text-lg flex items-center justify-center gap-2"
+             >
+                Começar <i className="fas fa-arrow-right text-sm opacity-70"></i>
+             </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Etapa {step + 1} de {totalSteps}</span>

@@ -17,6 +17,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Verifica se estamos na Landing Page (rota raiz) para mudar o estilo do header
   const isLandingPage = location.pathname === '/';
 
+  const logoSrc = isLandingPage 
+    ? "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX3NlbV9mdW5kby5wbmciLCJpYXQiOjE3Njg5NDU3NjgsImV4cCI6MTgwMDQ4MTc2OH0.2h7K3D9NFx1wO1VospI5Ix3X8T9uv_3J4WmNAW11ncU"
+    : "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_baner_claro.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX2JhbmVyX2NsYXJvLnBuZyIsImlhdCI6MTc2OTAwMDk0NywiZXhwIjoxODAwNTM2OTQ3fQ.izPp0QjlfH1bqvU0RgZxqZtFxOzGfmZ5fMYJxwk5fXI";
+
   useEffect(() => {
     // 1. Check initial session
     storageService.getSession().then(session => {
@@ -54,8 +58,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img 
-              src="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/logo_sem_fundo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9sb2dvX3NlbV9mdW5kby5wbmciLCJpYXQiOjE3Njg5NDU3NjgsImV4cCI6MTgwMDQ4MTc2OH0.2h7K3D9NFx1wO1VospI5Ix3X8T9uv_3J4WmNAW11ncU" 
-              alt="Logo Igor Matos" 
+              src={logoSrc}
+              alt="Logo PonteDigital" 
               className="h-14 md:h-16 w-auto object-contain"
             />
           </Link>
@@ -158,7 +162,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             &copy; {new Date().getFullYear()} Igor Matos. Todos os direitos reservados.
           </p>
           <p className="text-xs mt-2 opacity-60">
-            Powered by RequirementFlow
+            Powered by PonteDigital
           </p>
         </div>
       </footer>
