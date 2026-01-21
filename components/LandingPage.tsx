@@ -11,6 +11,9 @@ const LandingPage: React.FC = () => {
   const [competencies, setCompetencies] = useState<CompetencyItem[]>([]);
   const [journey, setJourney] = useState<JourneyItem[]>([]);
   
+  // Estado para o formulário de contato
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,6 +59,17 @@ const LandingPage: React.FC = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.whatsapp) return;
+
+    const message = `Olá! Meu nome é *${contactForm.name}* (${contactForm.email}).\n\n${contactForm.message}`;
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://wa.me/${profile.whatsapp}?text=${encodedMessage}`;
+    
+    window.open(url, '_blank');
   };
 
   const getColorClasses = (theme: string) => {
@@ -305,7 +319,12 @@ const LandingPage: React.FC = () => {
             ))}
           </div>
           <div className="mt-16 text-center">
-             <a href={`https://wa.me/${profile.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30">
+             <a 
+                href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais sobre os serviços!")}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30"
+             >
                 <i className="fab fa-whatsapp text-lg"></i> Solicitar Orçamento
              </a>
           </div>
@@ -347,18 +366,48 @@ const LandingPage: React.FC = () => {
              </div>
              <div className="bg-white rounded-3xl p-8 shadow-2xl relative">
                 <h3 className="text-2xl font-bold mb-6 text-slate-800">Envie uma mensagem</h3>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label><input type="text" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" placeholder="Seu nome" /></div>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label><input type="email" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" placeholder="seu@email.com" /></div>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label><textarea rows={4} className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900 resize-none" placeholder="Como posso ajudar?"></textarea></div>
-                   <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-sm uppercase tracking-wide flex items-center justify-center gap-2"><i className="fab fa-whatsapp text-lg"></i> Enviar Mensagem</button>
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label>
+                      <input 
+                        type="text" 
+                        required
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" 
+                        placeholder="Seu nome" 
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label>
+                      <input 
+                        type="email"
+                        required 
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" 
+                        placeholder="seu@email.com" 
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label>
+                      <textarea 
+                        rows={4}
+                        required 
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900 resize-none" 
+                        placeholder="Como posso ajudar?"
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                      ></textarea>
+                   </div>
+                   <button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-sm uppercase tracking-wide flex items-center justify-center gap-2"><i className="fab fa-whatsapp text-lg"></i> Enviar Mensagem</button>
                 </form>
              </div>
           </div>
         </div>
       </section>
 
-      <a href={`https://wa.me/${profile.whatsapp}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
+      <a href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais!")}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
         <i className="fab fa-whatsapp text-3xl"></i>
       </a>
     </div>
