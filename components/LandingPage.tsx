@@ -160,7 +160,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Minha Jornada</h2>
             <div className="w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
-            <p className="mt-4 text-slate-400 text-lg">Tecnologia, Liderança e Resultados</p>
+            <p className="mt-4 text-slate-300 text-lg">Tecnologia, Liderança e Resultados</p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-12 items-start">
@@ -183,7 +183,7 @@ const LandingPage: React.FC = () => {
                               {item.period && <span className="text-slate-500 text-xs">{item.period}</span>}
                             </div>
                         </div>
-                        <p className="text-slate-400 leading-relaxed">{item.description}</p>
+                        <p className="text-slate-300 leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   </div>
@@ -192,7 +192,7 @@ const LandingPage: React.FC = () => {
                 {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
 
                 <div className="mt-12 text-center lg:text-left">
-                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
+                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-300 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
                 </div>
               </div>
 
@@ -228,7 +228,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4">
            <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Minhas Competências</h2>
-            <p className="text-slate-400">Onde posso agregar valor ao seu projeto</p>
+            <p className="text-slate-300">Onde posso agregar valor ao seu projeto</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -241,7 +241,7 @@ const LandingPage: React.FC = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-2">{comp.title}</h3>
                   {comp.subtitle && <p className="text-sm text-slate-400 mb-6 italic border-l-2 border-slate-600 pl-3">{comp.subtitle}</p>}
-                  <ul className="space-y-3 text-slate-400">
+                  <ul className="space-y-3 text-slate-300">
                     {comp.items.map((item, idx) => (
                       <li key={idx} className="flex items-center gap-2">
                         <i className={`fas fa-check ${colors.check} text-xs`}></i> {item}
@@ -283,7 +283,7 @@ const LandingPage: React.FC = () => {
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
                   <h3 className="text-xl font-bold mb-2 text-white">{project.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-grow">{project.description}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4 flex-grow">{project.description}</p>
                   <div className="flex flex-wrap gap-2 mb-6">
                     {project.technologies.split(',').map((tech, idx) => (
                       <span key={idx} className="text-[10px] font-bold uppercase px-2 py-1 bg-slate-900 text-slate-300 rounded border border-slate-700">{tech.trim()}</span>
@@ -305,7 +305,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Serviços</h2>
-            <p className="text-slate-400">Como posso ajudar sua empresa ou projeto</p>
+            <p className="text-slate-300">Como posso ajudar sua empresa ou projeto</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {services.map((service) => (
@@ -314,7 +314,7 @@ const LandingPage: React.FC = () => {
                   <i className={service.icon}></i>
                 </div>
                 <h3 className="text-lg font-bold mb-3">{service.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed flex-grow">{service.description}</p>
+                <p className="text-slate-300 text-sm leading-relaxed flex-grow">{service.description}</p>
               </div>
             ))}
           </div>
