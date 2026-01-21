@@ -244,7 +244,8 @@ const LandingPage: React.FC = () => {
                           <img 
                             src={getOptimizedImageUrl("https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png", 600)}
                             alt="Igor Matos Profissional" 
-                            loading="lazy"
+                            loading="eager"
+                            fetchPriority="high"
                             className="w-full h-auto object-cover relative z-10 hover:scale-105 transition-transform duration-700"
                           />
                           

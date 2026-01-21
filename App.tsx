@@ -191,13 +191,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Removemos o isLoading global bloqueante. O site carrega, e o auth acontece em background.
 
   useEffect(() => {
     // Initial check
     storageService.getSession().then(session => {
         setIsAdmin(!!session);
-        setIsLoading(false);
     });
 
     // Listener
@@ -207,10 +206,6 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  if (isLoading) {
-      return <div className="h-screen w-full flex items-center justify-center bg-slate-50 text-indigo-600"><i className="fas fa-spinner fa-spin text-2xl"></i></div>;
-  }
 
   return (
     <>
