@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { storageService } from './services/storage';
@@ -230,6 +231,7 @@ const App: React.FC = () => {
         </Layout>
       </HashRouter>
       <Analytics />
+      <SpeedInsights />
     </>
   );
 };

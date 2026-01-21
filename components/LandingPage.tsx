@@ -15,27 +15,36 @@ const LandingPage: React.FC = () => {
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Controle de carregamento individual para UX progressiva
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      // Carrega o perfil primeiro para renderizar o Hero (Largest Contentful Paint)
       try {
-        const [prof, projs, svcs, comps, journ] = await Promise.all([
-          storageService.getProfileInfo(),
+        const prof = await storageService.getProfileInfo();
+        setProfile(prof);
+      } catch (error) {
+        console.error("Erro ao carregar perfil", error);
+      } finally {
+        setLoadingProfile(false);
+      }
+
+      // Carrega o restante em paralelo sem bloquear a UI inicial
+      try {
+        const [projs, svcs, comps, journ] = await Promise.all([
           storageService.getProjects(),
           storageService.getServices(),
           storageService.getCompetencies(),
           storageService.getJourney()
         ]);
-        setProfile(prof);
         setProjects(projs);
         setServices(svcs);
         setCompetencies(comps);
         setJourney(journ);
       } catch (error) {
-        console.error("Failed to load landing page data", error);
-      } finally {
-        setLoading(false);
+        console.error("Erro ao carregar dados secundários", error);
       }
     };
     loadData();
@@ -80,8 +89,21 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white"><i className="fas fa-spinner fa-spin text-3xl"></i></div>;
-  if (!profile) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Erro ao carregar conteúdo.</div>;
+  // Componente Skeleton para o Hero
+  const HeroSkeleton = () => (
+    <div className="w-full max-w-4xl mx-auto flex flex-col items-center animate-pulse">
+        <div className="h-8 w-64 bg-slate-800 rounded-full mb-8"></div>
+        <div className="h-12 w-3/4 md:w-1/2 bg-slate-800 rounded-lg mb-6"></div>
+        <div className="h-8 w-2/3 md:w-1/3 bg-slate-800 rounded-lg mb-10"></div>
+        <div className="h-1.5 w-24 bg-slate-800 rounded-full mb-10"></div>
+        <div className="h-4 w-full max-w-2xl bg-slate-800 rounded mb-3"></div>
+        <div className="h-4 w-5/6 max-w-2xl bg-slate-800 rounded mb-12"></div>
+        <div className="flex gap-4">
+            <div className="h-14 w-40 bg-slate-800 rounded-xl"></div>
+            <div className="h-14 w-40 bg-slate-800 rounded-xl"></div>
+        </div>
+    </div>
+  );
 
   return (
     <div className="bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white scroll-smooth">
@@ -99,50 +121,58 @@ const LandingPage: React.FC = () => {
         {/* Content Layer - Adjusted padding for mobile to prevent cut-off */}
         <div className="relative z-10 w-full max-w-5xl mx-auto px-4 flex flex-col items-center text-center pt-32 pb-16 md:py-0">
             
-            {/* Badge */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 mb-8">
-               <span className="inline-flex items-center py-1.5 px-4 rounded-full bg-slate-800/60 border border-slate-700 backdrop-blur-md text-green-400 text-xs font-bold uppercase tracking-wider shadow-lg">
-                  <span className="relative flex h-2 w-2 mr-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                  </span>
-                  Disponível para novos projetos
-               </span>
-            </div>
+            {loadingProfile ? (
+                <HeroSkeleton />
+            ) : profile ? (
+                <>
+                    {/* Badge */}
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 mb-8">
+                    <span className="inline-flex items-center py-1.5 px-4 rounded-full bg-slate-800/60 border border-slate-700 backdrop-blur-md text-green-400 text-xs font-bold uppercase tracking-wider shadow-lg">
+                        <span className="relative flex h-2 w-2 mr-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        Disponível para novos projetos
+                    </span>
+                    </div>
 
-            {/* Main Text */}
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-               <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight leading-tight text-white drop-shadow-xl text-shadow-lg shadow-black/50 pb-2">
-                 Olá, eu sou {profile.displayName}
-               </h1>
-               <h2 className="text-2xl md:text-5xl font-extrabold mb-8 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-cyan-300 drop-shadow-sm pb-2">
-                 {profile.headline}
-               </h2>
-               
-               <div className="w-24 h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mx-auto mb-8 shadow-lg shadow-indigo-500/50"></div>
+                    {/* Main Text */}
+                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight leading-tight text-white drop-shadow-xl text-shadow-lg shadow-black/50 pb-2">
+                        Olá, eu sou {profile.displayName}
+                    </h1>
+                    <h2 className="text-2xl md:text-5xl font-extrabold mb-8 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-cyan-300 drop-shadow-sm pb-2">
+                        {profile.headline}
+                    </h2>
+                    
+                    <div className="w-24 h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mx-auto mb-8 shadow-lg shadow-indigo-500/50"></div>
 
-               <h3 className="text-lg md:text-2xl text-slate-100 font-light mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-                 Transformando desafios em resultados com tecnologia e liderança.
-               </h3>
-               
-               <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-light drop-shadow">
-                 {profile.bio}
-               </p>
-            </div>
+                    <h3 className="text-lg md:text-2xl text-slate-100 font-light mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+                        Transformando desafios em resultados com tecnologia e liderança.
+                    </h3>
+                    
+                    <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-light drop-shadow">
+                        {profile.bio}
+                    </p>
+                    </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-               <a href="https://www.linkedin.com/in/igor-mmatos/" target="_blank" rel="noopener noreferrer" 
-                  className="px-8 py-4 bg-slate-800/80 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-600 hover:border-slate-500 transition-all backdrop-blur-sm flex items-center justify-center gap-3 group shadow-lg">
-                  <i className="fab fa-linkedin text-xl group-hover:scale-110 transition-transform"></i> 
-                  <span>Ver Perfil Profissional</span>
-               </a>
-               <a href="#services" onClick={(e) => scrollToSection(e, 'services')} 
-                  className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
-                  <span>Contratar Serviços</span>
-                  <i className="fas fa-arrow-right"></i>
-               </a>
-            </div>
+                    {/* Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                    <a href="https://www.linkedin.com/in/igor-mmatos/" target="_blank" rel="noopener noreferrer" 
+                        className="px-8 py-4 bg-slate-800/80 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-600 hover:border-slate-500 transition-all backdrop-blur-sm flex items-center justify-center gap-3 group shadow-lg">
+                        <i className="fab fa-linkedin text-xl group-hover:scale-110 transition-transform"></i> 
+                        <span>Ver Perfil Profissional</span>
+                    </a>
+                    <a href="#services" onClick={(e) => scrollToSection(e, 'services')} 
+                        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
+                        <span>Contratar Serviços</span>
+                        <i className="fas fa-arrow-right"></i>
+                    </a>
+                    </div>
+                </>
+            ) : (
+                <div className="text-center text-red-400">Erro ao carregar perfil.</div>
+            )}
 
         </div>
 
@@ -189,7 +219,14 @@ const LandingPage: React.FC = () => {
                   </div>
                 ))}
                 
-                {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
+                {journey.length === 0 && <div className="text-center text-slate-500">
+                    {/* Placeholder para Journey enquanto carrega (se array vazio) */}
+                    <div className="animate-pulse space-y-8">
+                        {[1,2,3].map(i => (
+                            <div key={i} className="h-32 bg-slate-800 rounded-2xl"></div>
+                        ))}
+                    </div>
+                </div>}
 
                 <div className="mt-12 text-center lg:text-left">
                     <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-300 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
@@ -207,6 +244,7 @@ const LandingPage: React.FC = () => {
                           <img 
                             src={getOptimizedImageUrl("https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png", 600)}
                             alt="Igor Matos Profissional" 
+                            loading="lazy"
                             className="w-full h-auto object-cover relative z-10 hover:scale-105 transition-transform duration-700"
                           />
                           
@@ -271,11 +309,11 @@ const LandingPage: React.FC = () => {
 
           <div ref={scrollContainerRef} className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 pt-4 hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
              <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-            {projects.map((project) => (
+            {projects.length > 0 ? projects.map((project) => (
               <div key={project.id} className="min-w-[85%] md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center flex flex-col bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-indigo-500/50 transition-all duration-300 group hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/20">
                 <div className="h-48 bg-slate-700 relative overflow-hidden flex items-center justify-center">
                    {project.imageUrl ? (
-                      <img src={getOptimizedImageUrl(project.imageUrl, 400)} alt={project.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={getOptimizedImageUrl(project.imageUrl, 400)} loading="lazy" alt={project.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                    ) : (
                      <><div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div><i className="fas fa-code-branch text-5xl text-slate-600 group-hover:text-indigo-500 transition-colors transform group-hover:scale-110 duration-500"></i></>
                    )}
@@ -295,7 +333,19 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+                // Skeletons for projects
+                [1,2,3].map(i => (
+                    <div key={i} className="min-w-[85%] md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center flex flex-col bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 animate-pulse">
+                        <div className="h-48 bg-slate-700"></div>
+                        <div className="p-6 space-y-3">
+                            <div className="h-6 bg-slate-700 rounded w-3/4"></div>
+                            <div className="h-4 bg-slate-700 rounded w-full"></div>
+                            <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+                        </div>
+                    </div>
+                ))
+            )}
           </div>
         </div>
       </section>
@@ -320,7 +370,7 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="mt-16 text-center">
              <a 
-                href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais sobre os serviços!")}`} 
+                href={profile?.whatsapp ? `https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais sobre os serviços!")}` : "#"} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30"
@@ -353,13 +403,13 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-2xl font-bold text-white mb-2">Canais de Contato</h3>
                 <div className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
                      <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white border border-slate-700 shrink-0"><i className="fas fa-envelope"></i></div>
-                     <div><span className="block text-xs font-bold text-slate-500 uppercase">E-mail</span><a href={`mailto:${profile.email}`} className="text-slate-200 font-medium group-hover:text-white text-lg">{profile.email}</a></div>
+                     <div><span className="block text-xs font-bold text-slate-500 uppercase">E-mail</span><a href={`mailto:${profile?.email}`} className="text-slate-200 font-medium group-hover:text-white text-lg">{profile?.email || 'Carregando...'}</a></div>
                 </div>
-                <a href={profile.linkedinUrl || "https://www.linkedin.com/in/igor-mmatos/"} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                <a href={profile?.linkedinUrl || "https://www.linkedin.com/in/igor-mmatos/"} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
                      <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white border border-slate-700 shrink-0"><i className="fab fa-linkedin-in"></i></div>
                      <div><span className="block text-xs font-bold text-slate-500 uppercase">LinkedIn</span><span className="text-slate-200 font-medium group-hover:text-white text-lg">Ver Perfil</span></div>
                 </a>
-                <a href={`https://wa.me/${profile.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                <a href={profile?.whatsapp ? `https://wa.me/${profile.whatsapp}` : "#"} target="_blank" rel="noreferrer" className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
                      <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-green-400 group-hover:bg-green-600 group-hover:text-white border border-slate-700 shrink-0"><i className="fab fa-whatsapp"></i></div>
                      <div><span className="block text-xs font-bold text-slate-500 uppercase">WhatsApp</span><span className="text-slate-200 font-medium group-hover:text-white text-lg">Falar agora</span></div>
                 </a>
@@ -407,9 +457,11 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <a href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais!")}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
-        <i className="fab fa-whatsapp text-3xl"></i>
-      </a>
+      {profile?.whatsapp && (
+        <a href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais!")}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
+            <i className="fab fa-whatsapp text-3xl"></i>
+        </a>
+      )}
     </div>
   );
 };
