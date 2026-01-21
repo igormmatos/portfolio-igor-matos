@@ -41,6 +41,37 @@ const LandingPage: React.FC = () => {
     loadData();
   }, []);
 
+  // --- SEO: Schema Markup Injection (Person) ---
+  useEffect(() => {
+    if (profile) {
+      const schemaData = {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": profile.displayName,
+        "jobTitle": profile.headline,
+        "description": profile.bio,
+        "url": "https://igormmatos.com.br",
+        "image": "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png",
+        "sameAs": [
+          profile.linkedinUrl,
+          "https://github.com/igormmatos" // Adicionar outros se houver no futuro
+        ].filter(Boolean)
+      };
+
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schemaData);
+      document.head.appendChild(script);
+
+      // Update Document Title Dynamically
+      document.title = `${profile.displayName} | Gestão Estratégica e TI`;
+
+      return () => {
+        document.head.removeChild(script);
+      };
+    }
+  }, [profile]);
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const { current } = scrollContainerRef;
@@ -86,7 +117,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white scroll-smooth">
       {/* 1. HERO SECTION - REDESIGNED */}
-      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900 border-b border-slate-800">
+      <section id="hero" aria-label="Introdução" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900 border-b border-slate-800">
         
         {/* Background Layer - Clean, No Image */}
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -110,10 +141,11 @@ const LandingPage: React.FC = () => {
                </span>
             </div>
 
-            {/* Main Text */}
+            {/* Main Text & H1 Structure */}
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight leading-tight text-white drop-shadow-xl text-shadow-lg shadow-black/50 pb-2">
-                 Olá, eu sou {profile.displayName}
+                 <span className="block text-lg md:text-2xl font-light text-slate-300 mb-2">Olá, eu sou</span>
+                 {profile.displayName}
                </h1>
                <h2 className="text-2xl md:text-5xl font-extrabold mb-8 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-cyan-300 drop-shadow-sm pb-2">
                  {profile.headline}
@@ -122,24 +154,24 @@ const LandingPage: React.FC = () => {
                <div className="w-24 h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mx-auto mb-8 shadow-lg shadow-indigo-500/50"></div>
 
                <h3 className="text-lg md:text-2xl text-slate-100 font-light mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-                 Transformando desafios em resultados com tecnologia e liderança.
+                 Transformando desafios em resultados com <strong>Gestão Estratégica</strong>, <strong>Tecnologia</strong> e <strong>Inovação</strong>.
                </h3>
                
                <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-light drop-shadow">
-                 {profile.bio}
+                 {profile.bio} Atuo no desenvolvimento de soluções digitais eficientes e na liderança de projetos complexos, unindo visão militar de logística com agilidade tecnológica.
                </p>
             </div>
 
-            {/* Buttons */}
+            {/* Buttons / CTAs */}
             <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                <a href="https://www.linkedin.com/in/igor-mmatos/" target="_blank" rel="noopener noreferrer" 
                   className="px-8 py-4 bg-slate-800/80 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-600 hover:border-slate-500 transition-all backdrop-blur-sm flex items-center justify-center gap-3 group shadow-lg">
                   <i className="fab fa-linkedin text-xl group-hover:scale-110 transition-transform"></i> 
                   <span>Ver Perfil Profissional</span>
                </a>
-               <a href="#services" onClick={(e) => scrollToSection(e, 'services')} 
+               <a href="#projects" onClick={(e) => scrollToSection(e, 'portfolio')} 
                   className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
-                  <span>Contratar Serviços</span>
+                  <span>Ver Projetos</span>
                   <i className="fas fa-arrow-right"></i>
                </a>
             </div>
@@ -148,19 +180,19 @@ const LandingPage: React.FC = () => {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden md:block opacity-50 hover:opacity-100 transition-opacity">
-           <a href="#journey" onClick={(e) => scrollToSection(e, 'journey')} className="text-slate-400 hover:text-white">
+           <a href="#journey" onClick={(e) => scrollToSection(e, 'journey')} className="text-slate-400 hover:text-white" aria-label="Rolar para baixo">
               <i className="fas fa-chevron-down text-2xl"></i>
            </a>
         </div>
       </section>
 
       {/* 2. JORNADA (Dynamic from DB) - UPDATED LAYOUT */}
-      <section id="journey" className="py-24 bg-slate-900 relative">
+      <section id="journey" aria-labelledby="journey-title" className="py-24 bg-slate-900 relative">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Minha Jornada</h2>
+            <h2 id="journey-title" className="text-3xl md:text-4xl font-bold mb-4">Minha Jornada</h2>
             <div className="w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
-            <p className="mt-4 text-slate-300 text-lg">Tecnologia, Liderança e Resultados</p>
+            <p className="mt-4 text-slate-300 text-lg">Experiência em Tecnologia, Liderança Militar e Resultados</p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-12 items-start">
@@ -206,7 +238,7 @@ const LandingPage: React.FC = () => {
                           
                           <img 
                             src={getOptimizedImageUrl("https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png", 600)}
-                            alt="Igor Matos Profissional" 
+                            alt="Igor Matos - Gestor de Projetos e Especialista em TI" 
                             className="w-full h-auto object-cover relative z-10 hover:scale-105 transition-transform duration-700"
                           />
                           
@@ -224,11 +256,11 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* 3. COMPETÊNCIAS (Dynamic from DB) */}
-      <section id="skills" className="py-24 bg-slate-900/50 border-y border-slate-800">
+      <section id="skills" aria-labelledby="skills-title" className="py-24 bg-slate-900/50 border-y border-slate-800">
         <div className="max-w-6xl mx-auto px-4">
            <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Minhas Competências</h2>
-            <p className="text-slate-300">Onde posso agregar valor ao seu projeto</p>
+            <h2 id="skills-title" className="text-3xl font-bold mb-4">Minhas Competências</h2>
+            <p className="text-slate-300">Hard Skills e Soft Skills para agregar valor ao seu projeto</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -256,16 +288,16 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* 4. PORTFOLIO CAROUSEL (Dynamic) */}
-      <section id="portfolio" className="py-24 bg-slate-900">
+      <section id="portfolio" aria-labelledby="portfolio-title" className="py-24 bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 relative">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Projetos em Destaque</h2>
+              <h2 id="portfolio-title" className="text-3xl font-bold mb-2">Projetos em Destaque</h2>
               <div className="w-20 h-1 bg-indigo-600 rounded-full"></div>
             </div>
             <div className="hidden md:flex gap-2">
-              <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-slate-600 hover:bg-slate-800 flex items-center justify-center transition-colors"><i className="fas fa-chevron-left"></i></button>
-              <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-slate-600 hover:bg-slate-800 flex items-center justify-center transition-colors"><i className="fas fa-chevron-right"></i></button>
+              <button onClick={() => scroll('left')} aria-label="Rolar para esquerda" className="w-10 h-10 rounded-full border border-slate-600 hover:bg-slate-800 flex items-center justify-center transition-colors"><i className="fas fa-chevron-left"></i></button>
+              <button onClick={() => scroll('right')} aria-label="Rolar para direita" className="w-10 h-10 rounded-full border border-slate-600 hover:bg-slate-800 flex items-center justify-center transition-colors"><i className="fas fa-chevron-right"></i></button>
             </div>
           </div>
 
@@ -301,11 +333,11 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* 5. SERVICES GRID (Dynamic) */}
-      <section id="services" className="py-24 bg-slate-900/50 border-t border-slate-800">
+      <section id="services" aria-labelledby="services-title" className="py-24 bg-slate-900/50 border-t border-slate-800">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Serviços</h2>
-            <p className="text-slate-300">Como posso ajudar sua empresa ou projeto</p>
+            <h2 id="services-title" className="text-3xl font-bold mb-4">Serviços</h2>
+            <p className="text-slate-300">Como posso ajudar sua empresa ou projeto com soluções digitais</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {services.map((service) => (
@@ -332,7 +364,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* 6. CONTACT */}
-      <section id="contact" className="py-24 bg-slate-900 relative overflow-hidden">
+      <section id="contact" aria-labelledby="contact-title" className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-indigo-900/10"></div>
         <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col gap-16">
           
@@ -341,8 +373,8 @@ const LandingPage: React.FC = () => {
                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
                  <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-indigo-500/30"><i className="fas fa-lightbulb"></i></div>
-                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Tem uma ideia de projeto?</h3>
-                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">Utilize minha ferramenta inteligente <b>PonteDigital</b> para estruturar seus requisitos em minutos.</p>
+                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Tem uma ideia de software?</h3>
+                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">Utilize minha ferramenta inteligente <b>PonteDigital</b> para estruturar seus requisitos de desenvolvimento em minutos.</p>
                     <Link to="/requirements" className="px-8 py-4 bg-white text-indigo-900 font-bold text-lg rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all shadow-xl hover:shadow-white/20 flex items-center gap-3"><i className="fas fa-pen-nib"></i> Estruturar Minha Ideia Agora</Link>
                  </div>
              </div>
@@ -350,7 +382,7 @@ const LandingPage: React.FC = () => {
 
           <div id="contact-channels" className="grid md:grid-cols-2 gap-12 items-start scroll-mt-24">
              <div className="flex flex-col justify-center h-full space-y-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Canais de Contato</h3>
+                <h3 id="contact-title" className="text-2xl font-bold text-white mb-2">Canais de Contato</h3>
                 <div className="flex items-center gap-4 group p-4 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
                      <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white border border-slate-700 shrink-0"><i className="fas fa-envelope"></i></div>
                      <div><span className="block text-xs font-bold text-slate-500 uppercase">E-mail</span><a href={`mailto:${profile.email}`} className="text-slate-200 font-medium group-hover:text-white text-lg">{profile.email}</a></div>
