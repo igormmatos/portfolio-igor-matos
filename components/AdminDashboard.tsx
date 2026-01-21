@@ -377,10 +377,10 @@ const AdminDashboard: React.FC = () => {
                         <div className="flex-grow overflow-y-auto">
                             {submissions.length === 0 && <div className="p-8 text-center text-slate-400">Nenhum requisito recebido.</div>}
                             {submissions.map(sub => (
-                                <div 
+                                <button 
                                     key={sub.id} 
                                     onClick={() => setSelectedSubId(sub.id)} 
-                                    className={`p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 relative group ${selectedSubId === sub.id ? 'bg-indigo-50/60 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
+                                    className={`w-full text-left p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 relative group outline-none focus:bg-slate-50 ${selectedSubId === sub.id ? 'bg-indigo-50/60 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
                                 >
                                     <div className="flex justify-between items-start mb-1.5">
                                         <h4 className={`text-sm font-bold truncate pr-2 ${selectedSubId === sub.id ? 'text-indigo-900' : 'text-slate-700'}`}>{sub.answers.projectName || 'Projeto sem nome'}</h4>
@@ -391,10 +391,10 @@ const AdminDashboard: React.FC = () => {
                                         <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                                         <span>{new Date(sub.timestamp).toLocaleDateString()}</span>
                                     </div>
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm rounded-lg border border-slate-100">
-                                         <button onClick={(e) => handleDeleteRequest(e, sub.id, 'submissions', storageService.deleteSubmission, setSubmissions)} className="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg"><i className="fas fa-trash text-xs"></i></button>
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity bg-white shadow-sm rounded-lg border border-slate-100">
+                                         <div onClick={(e) => handleDeleteRequest(e, sub.id, 'submissions', storageService.deleteSubmission, setSubmissions)} className="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg cursor-pointer" role="button" aria-label="Excluir"><i className="fas fa-trash text-xs"></i></div>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
