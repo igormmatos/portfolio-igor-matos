@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { storageService } from './services/storage';
@@ -227,7 +226,6 @@ const App: React.FC = () => {
           />
         </Routes>
       </Layout>
-      <Analytics />
     </HashRouter>
   );
 };
