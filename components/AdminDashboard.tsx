@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '../services/storage';
 import { FormSubmission, ProjectStatus, PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
@@ -182,14 +181,28 @@ const AdminDashboard: React.FC = () => {
 
   const handleSaveItem = async (
     item: any, 
-    saveFn: (i: any) => Promise<void>, 
+    saveFn: (i: any) => Promise<any>, // Expects to return the saved item
     tabName: AdminTab,
-    setListFn: (l: any) => void
+    setListFn: React.Dispatch<React.SetStateAction<any[]>>
   ) => {
     try {
-      await saveFn(item);
-      // Recarrega apenas a aba atual forçadamente
-      await loadTabData(tabName, true);
+      const savedItem = await saveFn(item);
+      
+      // Otimização: Atualiza o estado local diretamente com o item retornado do banco
+      // em vez de recarregar toda a lista via API.
+      setListFn((prevList: any[]) => {
+          const index = prevList.findIndex(p => p.id === item.id);
+          if (index >= 0) {
+              // Update existing
+              const newList = [...prevList];
+              newList[index] = savedItem;
+              return newList;
+          } else {
+              // Insert new (append to end or start, depending on preference. Here appending)
+              return [...prevList, savedItem];
+          }
+      });
+
       showNotification('Item salvo com sucesso!', 'success');
       if (activeTab === 'portfolio') setEditingProject(null);
     } catch (e: any) { 
@@ -227,8 +240,6 @@ const AdminDashboard: React.FC = () => {
       if (!id || !deleteFn || !setListFn) return;
 
       try {
-        console.log(`[DELETE] Executando exclusão real. Tabela: '${tableName}', ID: '${id}'`);
-
         // Atualização Otimista
         setListFn((prevList: any[]) => prevList.filter((item) => item.id !== id));
 
@@ -254,7 +265,8 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!profile) return;
     try {
-      await storageService.saveProfileInfo(profile);
+      const savedProfile = await storageService.saveProfileInfo(profile);
+      setProfile(savedProfile); // Update local state directly
       showNotification('Perfil atualizado!', 'success');
     } catch (e: any) { 
         showNotification(e.message || 'Erro ao salvar perfil', 'error'); 

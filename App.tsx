@@ -1,12 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import UserForm from './components/UserForm';
-import AdminDashboard from './components/AdminDashboard';
-import Login from './components/Login';
 import LandingPage from './components/LandingPage';
+import Login from './components/Login';
 import { storageService } from './services/storage';
 import { supabase } from './services/supabase';
+
+// Lazy loading dos componentes pesados
+const UserForm = React.lazy(() => import('./components/UserForm'));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 
 // Componente Wrapper para Header/Footer condicional
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -140,7 +141,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </header>
 
       <main className={`flex-grow ${isLandingPage ? 'pt-0' : 'pt-6'}`}>
-        {children}
+        <Suspense fallback={
+          <div className="h-96 w-full flex items-center justify-center">
+            <i className="fas fa-circle-notch fa-spin text-3xl text-indigo-500"></i>
+          </div>
+        }>
+          {children}
+        </Suspense>
       </main>
 
       <footer className={`border-t py-8 no-print ${

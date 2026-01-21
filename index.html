@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/favicon.ico?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9mYXZpY29uLmljbyIsImlhdCI6MTc2OTAwMDUyMCwiZXhwIjoxODAwNTM2NTIwfQ.J24Uwc-zMDgnndDqbjORnl9B6H_hoG22OczNhmsjzlI" />
     <title>RequirementFlow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- CDN do Tailwind mantido para visualização no AI Studio (remover ao fazer deploy no Vercel) -->
+    <!-- CDN do Tailwind mantido para visualização rápida, mas o projeto usa PostCSS no build -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -17,16 +18,16 @@
         .print-only { display: block !important; }
       }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
     "vite": "https://esm.sh/vite@^7.3.1",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.91.0"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.91.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
