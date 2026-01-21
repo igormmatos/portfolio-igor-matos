@@ -4,6 +4,7 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { storageService } from './services/storage';
 import { supabase } from './services/supabase';
+import { getOptimizedImageUrl } from './utils/image';
 
 // Lazy loading dos componentes pesados
 const UserForm = React.lazy(() => import('./components/UserForm'));
@@ -17,9 +18,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Verifica se estamos na Landing Page (rota raiz) para mudar o estilo do header
   const isLandingPage = location.pathname === '/';
 
-  const logoSrc = isLandingPage 
+  // URLs originais
+  const rawLogoSrc = isLandingPage 
     ? "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/logo_sem_fundo.png"
     : "https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/logo_baner_claro.png";
+
+  // Aplica otimização: Largura 300px é suficiente para o header
+  const logoSrc = getOptimizedImageUrl(rawLogoSrc, 300);
 
   useEffect(() => {
     // 1. Check initial session

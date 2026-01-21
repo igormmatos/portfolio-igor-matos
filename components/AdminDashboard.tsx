@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '../services/storage';
 import { FormSubmission, ProjectStatus, PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
 import { REQUIREMENT_FORM_FIELDS } from '../constants';
+import { getOptimizedImageUrl } from '../utils/image';
 
 type AdminTab = 'submissions' | 'portfolio' | 'profile' | 'services' | 'competencies' | 'journey';
 
@@ -479,7 +480,7 @@ const AdminDashboard: React.FC = () => {
                                 />
                                 
                                 <div className="h-32 bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
-                                    {p.imageUrl ? <img src={p.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-slate-300"><i className="fas fa-image text-3xl"></i></div>}
+                                    {p.imageUrl ? <img src={getOptimizedImageUrl(p.imageUrl, 400)} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-slate-300"><i className="fas fa-image text-3xl"></i></div>}
                                 </div>
                                 <h4 className="font-bold text-slate-900 mb-1">{p.title}</h4>
                                 <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{p.role}</span>

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/storage';
 import { ProfileInfo, PortfolioProject, ServiceItem, CompetencyItem, JourneyItem } from '../types';
+import { getOptimizedImageUrl } from '../utils/image';
 
 const LandingPage: React.FC = () => {
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
@@ -177,7 +178,7 @@ const LandingPage: React.FC = () => {
                 {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
 
                 <div className="mt-12 text-center lg:text-left">
-                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/sign/media/src/CV-Igor-MATOS.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kNzRiZDg2NS01Y2MxLTQ2ZGUtYjUyOC1iMGY4ZDBhMjNiMzMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtZWRpYS9zcmMvQ1YtSWdvci1NQVRPUy5wZGYiLCJpYXQiOjE3NjkwMDY1NjIsImV4cCI6MTgwMDU0MjU2Mn0.g2Q9KQoMVziSPIm_XOl_FYPrTY1AZrpqSjU9VohZggk" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
+                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
                 </div>
               </div>
 
@@ -190,7 +191,7 @@ const LandingPage: React.FC = () => {
                           <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
                           
                           <img 
-                            src="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png" 
+                            src={getOptimizedImageUrl("https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/image/Matos_sem_fundo.png", 600)}
                             alt="Igor Matos Profissional" 
                             className="w-full h-auto object-cover relative z-10 hover:scale-105 transition-transform duration-700"
                           />
@@ -260,7 +261,7 @@ const LandingPage: React.FC = () => {
               <div key={project.id} className="min-w-[85%] md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center flex flex-col bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-indigo-500/50 transition-all duration-300 group hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/20">
                 <div className="h-48 bg-slate-700 relative overflow-hidden flex items-center justify-center">
                    {project.imageUrl ? (
-                      <img src={project.imageUrl} alt={project.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={getOptimizedImageUrl(project.imageUrl, 400)} alt={project.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                    ) : (
                      <><div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div><i className="fas fa-code-branch text-5xl text-slate-600 group-hover:text-indigo-500 transition-colors transform group-hover:scale-110 duration-500"></i></>
                    )}
