@@ -13,13 +13,41 @@ const UserForm: React.FC = () => {
   // State para o Modal de Boas-vindas
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // Verifica se é a primeira visita ao montar o componente
+  // Verifica se é a primeira visita e carrega rascunho salvo
   useEffect(() => {
+    // 1. Welcome Modal Logic
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome) {
       setShowWelcomeModal(true);
     }
+
+    // 2. Draft Recovery Logic
+    const savedDraft = localStorage.getItem('pontedigital_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.userInfo) setUserInfo(parsed.userInfo);
+        if (parsed.answers) setAnswers(parsed.answers);
+        // Opcional: Recuperar o passo onde parou ou voltar para o início para revisão
+        // if (parsed.step) setStep(parsed.step); 
+      } catch (e) {
+        console.error("Erro ao recuperar rascunho", e);
+      }
+    }
   }, []);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!isSubmitted && (userInfo.name || Object.keys(answers).length > 0)) {
+      const draftData = {
+        userInfo,
+        answers,
+        step,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('pontedigital_draft', JSON.stringify(draftData));
+    }
+  }, [userInfo, answers, step, isSubmitted]);
 
   const handleStart = () => {
     localStorage.setItem('hasSeenWelcome', 'true');
@@ -82,10 +110,19 @@ const UserForm: React.FC = () => {
       answers,
     };
 
-    await storageService.saveSubmission(submission);
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+    try {
+      await storageService.saveSubmission(submission);
+      
+      // Limpa o rascunho após sucesso
+      localStorage.removeItem('pontedigital_draft');
+      
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error(error);
+      alert("Houve um erro ao enviar. Por favor, tente novamente.");
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {

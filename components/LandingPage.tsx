@@ -11,6 +11,9 @@ const LandingPage: React.FC = () => {
   const [competencies, setCompetencies] = useState<CompetencyItem[]>([]);
   const [journey, setJourney] = useState<JourneyItem[]>([]);
   
+  // Estado para o formulário de contato
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,6 +59,17 @@ const LandingPage: React.FC = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.whatsapp) return;
+
+    const message = `Olá! Meu nome é *${contactForm.name}* (${contactForm.email}).\n\n${contactForm.message}`;
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://wa.me/${profile.whatsapp}?text=${encodedMessage}`;
+    
+    window.open(url, '_blank');
   };
 
   const getColorClasses = (theme: string) => {
@@ -146,7 +160,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Minha Jornada</h2>
             <div className="w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
-            <p className="mt-4 text-slate-400 text-lg">Tecnologia, Liderança e Resultados</p>
+            <p className="mt-4 text-slate-300 text-lg">Tecnologia, Liderança e Resultados</p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-12 items-start">
@@ -169,7 +183,7 @@ const LandingPage: React.FC = () => {
                               {item.period && <span className="text-slate-500 text-xs">{item.period}</span>}
                             </div>
                         </div>
-                        <p className="text-slate-400 leading-relaxed">{item.description}</p>
+                        <p className="text-slate-300 leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   </div>
@@ -178,7 +192,7 @@ const LandingPage: React.FC = () => {
                 {journey.length === 0 && <div className="text-center text-slate-500">Nenhuma informação de jornada cadastrada.</div>}
 
                 <div className="mt-12 text-center lg:text-left">
-                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-400 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
+                    <a href="https://iquantqgsrgwbqfwbhfq.supabase.co/storage/v1/object/public/media/src/CV-Igor-MATOS.pdf" target="_blank" rel="noopener noreferrer" className="inline-block text-slate-300 hover:text-white border-b border-dashed border-slate-500 hover:border-white transition-colors pb-1">Baixar CV Completo (PDF)</a>
                 </div>
               </div>
 
@@ -214,7 +228,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4">
            <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Minhas Competências</h2>
-            <p className="text-slate-400">Onde posso agregar valor ao seu projeto</p>
+            <p className="text-slate-300">Onde posso agregar valor ao seu projeto</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -227,7 +241,7 @@ const LandingPage: React.FC = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-2">{comp.title}</h3>
                   {comp.subtitle && <p className="text-sm text-slate-400 mb-6 italic border-l-2 border-slate-600 pl-3">{comp.subtitle}</p>}
-                  <ul className="space-y-3 text-slate-400">
+                  <ul className="space-y-3 text-slate-300">
                     {comp.items.map((item, idx) => (
                       <li key={idx} className="flex items-center gap-2">
                         <i className={`fas fa-check ${colors.check} text-xs`}></i> {item}
@@ -269,7 +283,7 @@ const LandingPage: React.FC = () => {
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
                   <h3 className="text-xl font-bold mb-2 text-white">{project.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-grow">{project.description}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4 flex-grow">{project.description}</p>
                   <div className="flex flex-wrap gap-2 mb-6">
                     {project.technologies.split(',').map((tech, idx) => (
                       <span key={idx} className="text-[10px] font-bold uppercase px-2 py-1 bg-slate-900 text-slate-300 rounded border border-slate-700">{tech.trim()}</span>
@@ -291,7 +305,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Serviços</h2>
-            <p className="text-slate-400">Como posso ajudar sua empresa ou projeto</p>
+            <p className="text-slate-300">Como posso ajudar sua empresa ou projeto</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {services.map((service) => (
@@ -300,12 +314,17 @@ const LandingPage: React.FC = () => {
                   <i className={service.icon}></i>
                 </div>
                 <h3 className="text-lg font-bold mb-3">{service.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed flex-grow">{service.description}</p>
+                <p className="text-slate-300 text-sm leading-relaxed flex-grow">{service.description}</p>
               </div>
             ))}
           </div>
           <div className="mt-16 text-center">
-             <a href={`https://wa.me/${profile.whatsapp}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30">
+             <a 
+                href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais sobre os serviços!")}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30"
+             >
                 <i className="fab fa-whatsapp text-lg"></i> Solicitar Orçamento
              </a>
           </div>
@@ -347,18 +366,48 @@ const LandingPage: React.FC = () => {
              </div>
              <div className="bg-white rounded-3xl p-8 shadow-2xl relative">
                 <h3 className="text-2xl font-bold mb-6 text-slate-800">Envie uma mensagem</h3>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label><input type="text" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" placeholder="Seu nome" /></div>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label><input type="email" className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" placeholder="seu@email.com" /></div>
-                   <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label><textarea rows={4} className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900 resize-none" placeholder="Como posso ajudar?"></textarea></div>
-                   <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-sm uppercase tracking-wide flex items-center justify-center gap-2"><i className="fab fa-whatsapp text-lg"></i> Enviar Mensagem</button>
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nome</label>
+                      <input 
+                        type="text" 
+                        required
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" 
+                        placeholder="Seu nome" 
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">E-mail</label>
+                      <input 
+                        type="email"
+                        required 
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900" 
+                        placeholder="seu@email.com" 
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mensagem</label>
+                      <textarea 
+                        rows={4}
+                        required 
+                        className="w-full bg-slate-100 border border-transparent rounded-xl px-4 py-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500 transition-all text-slate-900 resize-none" 
+                        placeholder="Como posso ajudar?"
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                      ></textarea>
+                   </div>
+                   <button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-sm uppercase tracking-wide flex items-center justify-center gap-2"><i className="fab fa-whatsapp text-lg"></i> Enviar Mensagem</button>
                 </form>
              </div>
           </div>
         </div>
       </section>
 
-      <a href={`https://wa.me/${profile.whatsapp}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
+      <a href={`https://wa.me/${profile.whatsapp}?text=${encodeURIComponent("Olá, vi o seu site e gostaria de conversar um pouco mais!")}`} target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-110 animate-bounce-slow" aria-label="Contato via WhatsApp">
         <i className="fab fa-whatsapp text-3xl"></i>
       </a>
     </div>
