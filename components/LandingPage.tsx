@@ -119,7 +119,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* Content Layer - Adjusted padding for mobile to prevent cut-off */}
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 flex flex-col items-center text-center pt-32 pb-16 md:py-0">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 flex flex-col items-center text-center pt-44 pb-16 md:py-0">
             
             {loadingProfile ? (
                 <HeroSkeleton />
