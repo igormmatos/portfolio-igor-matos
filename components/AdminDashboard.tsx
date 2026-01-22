@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '../services/storage';
-import { FormSubmission, ProjectStatus, PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
-import { REQUIREMENT_FORM_FIELDS } from '../constants';
+import { PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
 import { getOptimizedImageUrl } from '../utils/image';
 
 // --- TYPES & INTERFACES ---
 
-type AdminTab = 'submissions' | 'portfolio' | 'profile' | 'services' | 'competencies' | 'journey';
+type AdminTab = 'portfolio' | 'profile' | 'services' | 'competencies' | 'journey';
 
 interface DrawerProps {
   isOpen: boolean;
@@ -55,32 +54,6 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, onSav
   );
 };
 
-const StatusBadge = ({ status }: { status?: string }) => {
-    let colorClass = 'bg-slate-100 text-slate-600 border-slate-200';
-    let icon = 'fa-circle';
-    
-    switch (status) {
-      case ProjectStatus.STARTED: 
-        colorClass = 'bg-blue-50 text-blue-600 border-blue-100'; 
-        icon = 'fa-play';
-        break;
-      case ProjectStatus.NEEDS_ADJUSTMENTS: 
-        colorClass = 'bg-orange-50 text-orange-600 border-orange-100'; 
-        icon = 'fa-exclamation-circle';
-        break;
-      case ProjectStatus.FINISHED: 
-        colorClass = 'bg-emerald-50 text-emerald-600 border-emerald-100'; 
-        icon = 'fa-check-circle';
-        break;
-    }
-    return (
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 w-fit ${colorClass}`}>
-            <i className={`fas ${icon} text-[10px]`}></i>
-            {status || 'Novo'}
-        </span>
-    );
-};
-
 const EmptyState = ({ title, message, action }: { title: string, message: string, action?: () => void }) => (
     <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300 text-3xl">
@@ -100,13 +73,12 @@ const EmptyState = ({ title, message, action }: { title: string, message: string
 
 const AdminDashboard: React.FC = () => {
   // Navigation & Layout State
-  const [activeTab, setActiveTab] = useState<AdminTab>('submissions');
+  const [activeTab, setActiveTab] = useState<AdminTab>('portfolio');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
   const loadedTabs = useRef<Set<string>>(new Set());
 
   // Data State
-  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -114,7 +86,6 @@ const AdminDashboard: React.FC = () => {
   const [journey, setJourney] = useState<JourneyItem[]>([]);
 
   // Interaction State
-  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   
   // Drawer/Edit State (Generic to handle all types)
@@ -142,7 +113,6 @@ const AdminDashboard: React.FC = () => {
     setTabLoading(true);
     try {
       switch (tab) {
-        case 'submissions': setSubmissions(await storageService.getSubmissions()); break;
         case 'portfolio': setProjects(await storageService.getProjects()); break;
         case 'profile': setProfile(await storageService.getProfileInfo()); break;
         case 'services': setServices(await storageService.getServices()); break;
@@ -205,10 +175,8 @@ const AdminDashboard: React.FC = () => {
         setListFn((prev: any[]) => prev.filter(i => i.id !== id));
         if (!id.toString().startsWith('temp_')) await deleteFn(id);
         showNotification('Item excluído.', 'success');
-        if (activeTab === 'submissions' && selectedSubId === id) setSelectedSubId(null);
     } catch (e) {
         showNotification('Erro ao excluir item.', 'error');
-        // O ideal seria recarregar os dados aqui para reverter o estado otimista em caso de erro
     } finally {
         setDeleteModal({ isOpen: false, id: '', tableName: '', deleteFn: null, setListFn: null });
     }
@@ -265,33 +233,9 @@ const AdminDashboard: React.FC = () => {
     setEditingItem((prev: any) => ({ ...prev, [field]: value }));
   };
 
-  // --- SUBMISSIONS HELPERS ---
-  const handleStatusChange = async (id: string, newStatus: ProjectStatus) => {
-    try {
-        await storageService.updateSubmissionStatus(id, newStatus);
-        setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
-        showNotification('Status atualizado.');
-    } catch (e) { showNotification('Erro ao atualizar status.', 'error'); }
-  };
-
-  const handleCopyPrompt = (submission: FormSubmission) => {
-    let text = `📋 **PROMPT PARA IA - Requisitos de ${submission.userName}**\n\n`;
-    REQUIREMENT_FORM_FIELDS.forEach(field => {
-      const answer = submission.answers[field.id];
-      if (answer) {
-        const display = field.options?.find(o => o.value === answer)?.label || answer;
-        text += `**${field.label}**\n${display}\n\n`;
-      }
-    });
-    navigator.clipboard.writeText(text);
-    showNotification('Prompt copiado!');
-  };
-
   // --- STYLES ---
   const inputClass = "w-full border border-slate-200 rounded-lg p-3 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all hover:border-slate-300";
   const labelClass = "text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block";
-
-  const selectedSubmission = submissions.find(s => s.id === selectedSubId);
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
@@ -308,7 +252,6 @@ const AdminDashboard: React.FC = () => {
         
         <nav className="flex-grow p-4 space-y-1.5 overflow-y-auto">
           {[
-            { id: 'submissions', icon: 'fa-inbox', label: 'Requisitos' },
             { id: 'portfolio', icon: 'fa-briefcase', label: 'Portfólio' },
             { id: 'services', icon: 'fa-layer-group', label: 'Serviços' },
             { id: 'competencies', icon: 'fa-star', label: 'Competências' },
@@ -346,13 +289,13 @@ const AdminDashboard: React.FC = () => {
            <div className="flex items-center gap-4">
               <button className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg" onClick={() => setSidebarOpen(true)}><i className="fas fa-bars text-xl"></i></button>
               <h1 className="text-xl md:text-2xl font-bold text-slate-800 capitalize">
-                {activeTab === 'submissions' ? 'Gestão de Requisitos' : activeTab}
+                {activeTab}
               </h1>
               {tabLoading && <i className="fas fa-circle-notch fa-spin text-indigo-600 ml-2"></i>}
            </div>
 
-           {/* PRIMARY ACTION BUTTON (Except Submissions/Profile) */}
-           {activeTab !== 'submissions' && activeTab !== 'profile' && (
+           {/* PRIMARY ACTION BUTTON (Except Profile) */}
+           {activeTab !== 'profile' && (
                <button 
                  onClick={handleCreateNew}
                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 text-sm"
@@ -366,88 +309,6 @@ const AdminDashboard: React.FC = () => {
         {/* SCROLLABLE AREA */}
         <div className="flex-1 overflow-y-auto bg-slate-50 p-6 md:p-8">
             
-            {/* --- TAB: SUBMISSIONS --- */}
-            {activeTab === 'submissions' && (
-                <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[500px]">
-                    {/* List Panel */}
-                    <div className="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{submissions.length} Solicitações</span>
-                        </div>
-                        <div className="flex-grow overflow-y-auto">
-                            {submissions.length === 0 && <div className="p-8 text-center text-slate-400">Nenhum requisito recebido.</div>}
-                            {submissions.map(sub => (
-                                <button 
-                                    key={sub.id} 
-                                    onClick={() => setSelectedSubId(sub.id)} 
-                                    className={`w-full text-left p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 relative group outline-none focus:bg-slate-50 ${selectedSubId === sub.id ? 'bg-indigo-50/60 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
-                                >
-                                    <div className="flex justify-between items-start mb-1.5">
-                                        <h4 className={`text-sm font-bold truncate pr-2 ${selectedSubId === sub.id ? 'text-indigo-900' : 'text-slate-700'}`}>{sub.answers.projectName || 'Projeto sem nome'}</h4>
-                                        <StatusBadge status={sub.status} />
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                                        <span>{sub.userName}</span>
-                                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                        <span>{new Date(sub.timestamp).toLocaleDateString()}</span>
-                                    </div>
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity bg-white shadow-sm rounded-lg border border-slate-100">
-                                         <div onClick={(e) => handleDeleteRequest(e, sub.id, 'submissions', storageService.deleteSubmission, setSubmissions)} className="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg cursor-pointer" role="button" aria-label="Excluir"><i className="fas fa-trash text-xs"></i></div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Detail Panel */}
-                    <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative">
-                        {selectedSubmission ? (
-                            <>
-                                <div className="p-6 border-b border-slate-100 bg-slate-50/30 flex flex-col md:flex-row justify-between gap-4">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-slate-800 mb-1">{selectedSubmission.answers.projectName}</h2>
-                                        <div className="flex items-center gap-4 text-sm text-slate-500">
-                                            <a href={`mailto:${selectedSubmission.userEmail}`} className="hover:text-indigo-600 flex items-center gap-1"><i className="far fa-envelope"></i> {selectedSubmission.userEmail}</a>
-                                            <a href={`https://wa.me/${selectedSubmission.userPhone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="hover:text-green-600 flex items-center gap-1"><i className="fab fa-whatsapp"></i> {selectedSubmission.userPhone}</a>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <select 
-                                            value={selectedSubmission.status || ProjectStatus.NOT_STARTED} 
-                                            onChange={(e) => handleStatusChange(selectedSubmission.id, e.target.value as ProjectStatus)}
-                                            className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none font-medium shadow-sm"
-                                        >
-                                            {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        <button onClick={() => handleCopyPrompt(selectedSubmission)} className="px-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition shadow-lg flex items-center gap-2"><i className="fas fa-robot"></i> Copiar Prompt</button>
-                                    </div>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-8">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                                        {REQUIREMENT_FORM_FIELDS.map(field => {
-                                            const ans = selectedSubmission.answers[field.id];
-                                            if (!ans) return null;
-                                            const display = field.options?.find(o => o.value === ans)?.label || ans;
-                                            return (
-                                                <div key={field.id} className={field.type === 'TEXTAREA' ? 'md:col-span-2' : ''}>
-                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 block">{field.label}</label>
-                                                    <div className="text-slate-800 text-base leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-100">{display}</div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                                <i className="fas fa-mouse-pointer text-4xl mb-4 opacity-20"></i>
-                                <p>Selecione um item para ver detalhes</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
             {/* --- TAB: PORTFOLIO --- */}
             {activeTab === 'portfolio' && (
                 <>

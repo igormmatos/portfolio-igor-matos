@@ -9,7 +9,6 @@ import { supabase } from './services/supabase';
 import { getOptimizedImageUrl } from './utils/image';
 
 // Lazy loading dos componentes pesados
-const UserForm = React.lazy(() => import('./components/UserForm'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 
 // Componente Wrapper para Header/Footer condicional
@@ -73,7 +72,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <Link to="/" className="flex items-center gap-2 group z-50">
             <img 
               src={logoSrc}
-              alt="Logo PonteDigital" 
+              alt="Logo Igor Matos" 
               className="h-14 md:h-16 w-auto object-contain"
             />
           </Link>
@@ -85,7 +84,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <a href="#journey" onClick={(e) => scrollToSection(e, 'journey')} className="text-sm font-medium hover:text-indigo-400 transition-colors">Sobre</a>
                 <a href="#portfolio" onClick={(e) => scrollToSection(e, 'portfolio')} className="text-sm font-medium hover:text-indigo-400 transition-colors">Portfólio</a>
                 <a href="#services" onClick={(e) => scrollToSection(e, 'services')} className="text-sm font-medium hover:text-indigo-400 transition-colors">Serviços</a>
-                <a href="#start-project" onClick={(e) => scrollToSection(e, 'start-project')} className="text-sm font-medium hover:text-indigo-400 transition-colors">Seu Projeto</a>
                 <a href="#contact-channels" onClick={(e) => scrollToSection(e, 'contact-channels')} className="text-sm font-medium hover:text-indigo-400 transition-colors">Contato</a>
               </nav>
             )}
@@ -125,17 +123,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
             )}
             
-            <Link 
-              to="/requirements"
-              className={`hidden md:inline-flex px-4 py-2 text-sm font-bold rounded-full transition-all shadow-lg transform hover:scale-105 items-center ${
-                isLandingPage
-                  ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              }`}
-            >
-              <i className="fas fa-lightbulb mr-2"></i>
-              Tenho uma Ideia
-            </Link>
           </div>
         </div>
 
@@ -149,13 +136,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <a href="#contact-channels" onClick={(e) => scrollToSection(e, 'contact-channels')} className="hover:text-indigo-400 transition-colors">Contato</a>
              </nav>
              <div className="w-12 h-1 bg-indigo-500 rounded-full"></div>
-             <Link 
-              to="/requirements"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-500 transition-all flex items-center gap-2"
-            >
-              <i className="fas fa-lightbulb"></i> Tenho uma Ideia
-            </Link>
             {isAdmin && (
               <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400 hover:text-white mt-4">Acessar Dashboard</Link>
             )}
@@ -180,9 +160,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <p className="text-sm">
             &copy; {new Date().getFullYear()} Igor Matos. Todos os direitos reservados.
           </p>
-          <p className="text-xs mt-2 opacity-60">
-            Powered by PonteDigital
-          </p>
         </div>
       </footer>
     </div>
@@ -191,7 +168,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  // Removemos o isLoading global bloqueante. O site carrega, e o auth acontece em background.
 
   useEffect(() => {
     // Initial check
@@ -213,7 +189,6 @@ const App: React.FC = () => {
         <Layout>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/requirements" element={<UserForm />} />
             <Route 
               path="/login" 
               element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={() => {}} />} 

@@ -387,17 +387,7 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-indigo-900/10"></div>
         <div className="max-w-4xl mx-auto px-4 relative z-10 flex flex-col gap-16">
           
-          <div id="start-project" className="w-full bg-gradient-to-r from-indigo-900 to-slate-900 p-1 rounded-3xl shadow-2xl scroll-mt-24">
-             <div className="bg-slate-900 rounded-[1.3rem] p-8 md:p-12 text-center relative overflow-hidden">
-                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-                 <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-indigo-500/30"><i className="fas fa-lightbulb"></i></div>
-                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Tem uma ideia de projeto?</h3>
-                    <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">Utilize minha ferramenta inteligente <b>PonteDigital</b> para estruturar seus requisitos em minutos.</p>
-                    <Link to="/requirements" className="px-8 py-4 bg-white text-indigo-900 font-bold text-lg rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all shadow-xl hover:shadow-white/20 flex items-center gap-3"><i className="fas fa-pen-nib"></i> Estruturar Minha Ideia Agora</Link>
-                 </div>
-             </div>
-          </div>
+          {/* REMOVIDO CTA PONTEDIGITAL */}
 
           <div id="contact-channels" className="grid md:grid-cols-2 gap-12 items-start scroll-mt-24">
              <div className="flex flex-col justify-center h-full space-y-6">

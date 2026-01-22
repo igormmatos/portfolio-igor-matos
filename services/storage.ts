@@ -1,48 +1,8 @@
-import { FormSubmission, ProjectStatus, PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem } from '../types';
+
+import { PortfolioProject, ProfileInfo, ServiceItem, CompetencyItem, JourneyItem, FormSubmission } from '../types';
 import { supabase } from './supabase';
 
 export const storageService = {
-  // --- SUBMISSIONS ---
-  
-  getSubmissions: async (): Promise<FormSubmission[]> => {
-    // Select specific fields for list view optimization if needed in future
-    const { data, error } = await supabase.from('submissions').select('*').order('created_at', { ascending: false });
-    if (error) { console.error(error); return []; }
-    return data.map((item: any) => ({
-      id: item.id,
-      timestamp: item.created_at,
-      userName: item.user_name,
-      userEmail: item.user_email,
-      userPhone: item.user_phone,
-      isWhatsApp: item.is_whatsapp,
-      status: item.status,
-      answers: item.answers
-    }));
-  },
-
-  saveSubmission: async (submission: FormSubmission) => {
-    // This is allowed by "Public Insert Submissions" policy
-    const { error } = await supabase.from('submissions').insert({
-      user_name: submission.userName,
-      user_email: submission.userEmail,
-      user_phone: submission.userPhone,
-      is_whatsapp: submission.isWhatsApp,
-      status: ProjectStatus.NOT_STARTED,
-      answers: submission.answers,
-    });
-    if (error) throw error;
-  },
-
-  updateSubmissionStatus: async (id: string, status: ProjectStatus) => {
-    const { error } = await supabase.from('submissions').update({ status }).eq('id', id);
-    if (error) throw error;
-  },
-
-  deleteSubmission: async (id: string) => {
-    const { error } = await supabase.from('submissions').delete().eq('id', id);
-    if (error) throw error;
-  },
-
   // --- PORTFOLIO ---
 
   getProjects: async (): Promise<PortfolioProject[]> => {
@@ -289,6 +249,22 @@ export const storageService = {
 
   deleteJourneyItem: async (id: string) => {
     const { error } = await supabase.from('journey_items').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  // --- SUBMISSIONS ---
+
+  saveSubmission: async (submission: FormSubmission): Promise<void> => {
+    const dbData = {
+      user_name: submission.userName,
+      user_email: submission.userEmail,
+      user_phone: submission.userPhone,
+      is_whatsapp: submission.isWhatsApp,
+      answers: submission.answers,
+      created_at: submission.timestamp || new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('form_submissions').insert(dbData);
     if (error) throw error;
   },
 

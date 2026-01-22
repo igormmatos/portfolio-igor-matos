@@ -1,6 +1,6 @@
 # 🌐 Portfólio Profissional — Igor Matos
 
-Este é o meu portfólio pessoal como **Estrategista Tech & Gestor de Soluções**, onde apresento minha trajetória profissional, projetos em destaque, serviços oferecidos e competências técnicas. O objetivo é conectar minha experiência em liderança, tecnologia e inovação com oportunidades no mercado de TI, consultoria e gestão.
+Este é o meu portfólio pessoal como **Estrategista Tech & Gestor de Soluções**, onde apresento minha trajetória profissional, projetos em destaque, serviços oferecidos e competências técnicas.
 
 ---
 
@@ -18,7 +18,6 @@ Este portfólio foi desenvolvido como uma aplicação web responsiva, moderna e 
 - Exibir **projetos reais** com links para GitHub e demonstrações
 - Oferecer **serviços de consultoria, desenvolvimento e gestão**
 - Integrar com **WhatsApp API oficial** para contato direto
-- Permitir o envio de ideias de projeto via a ferramenta **PonteDigital**
 
 ---
 
@@ -28,7 +27,6 @@ Este portfólio foi desenvolvido como uma aplicação web responsiva, moderna e 
 - **Estilização:** Tailwind CSS
 - **Hospedagem:** Vercel
 - **Base de Dados:** Supabase
-- **Formulário inteligente:** PonteDigital (guiado para usuários leigos)
 - **Integrações:**
   - WhatsApp API Oficial
 
@@ -40,7 +38,6 @@ Este portfólio foi desenvolvido como uma aplicação web responsiva, moderna e 
 - **Minha Jornada:** Experiências profissionais e formações (condensadas)
 - **Projetos em Destaque:** Cards com descrição, tecnologias e links
 - **Serviços:** Lista de serviços oferecidos com ícones e descrições
-- **PonteDigital:** Ferramenta para estruturar ideias de projeto
 - **Contato:** Formulário + canais diretos (LinkedIn, WhatsApp, E-mail)
 
 ---
@@ -69,22 +66,20 @@ Rode o projeto localmente
 
 ## 🧪 Funcionalidades em Destaque
 
-- Modal de boas-vindas exibido apenas na primeira visita
+- Modal de boas-vindas exibido apenas na primeira visita (se ativado)
 - Cards de projeto com dados dinâmicos e links externos
 - Layout responsivo e acessível
 - Botão flutuante para adicionar projetos (modo admin)
 - SEO básico implementado
 - Estrutura modular e escalável
-- PonteDigital com validação de ideias para usuários leigos
 
 ---
 
 ## 🔐 Segurança e Boas Práticas
 
-- Validação e saneamento de dados no formulário PonteDigital
 - Proteção contra XSS e entradas maliciosas
 - HTTPS ativo via Vercel
-- Integração segura com APIs externas (WhatsApp, PicPay)
+- Integração segura com APIs externas
 - Controle de exibição de modais via localStorage
 
 ---
