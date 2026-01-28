@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import LandingPage from './components/LandingPage';
+import LandingPageImproved from './components/LandingPageImproved';
 import Login from './components/Login';
 import { storageService } from './services/storage';
 import { supabase } from './services/supabase';
@@ -188,7 +188,7 @@ const App: React.FC = () => {
       <HashRouter>
         <Layout>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingPageImproved />} />
             <Route 
               path="/login" 
               element={isAdmin ? <Navigate to="/admin" /> : <Login onLogin={() => {}} />} 
